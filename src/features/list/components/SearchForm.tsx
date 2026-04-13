@@ -9,6 +9,7 @@ import { Button, Col, Form, Input, Row, Select } from 'antd';
 import { useIntl } from '@umijs/max';
 import type { ListQueryParams } from '../types/types';
 import { STATUS_OPTIONS } from '../constants';
+import styles from './SearchForm.module.less';
 
 export interface SearchFormProps {
   onSearch: (values: Partial<ListQueryParams>) => void;
@@ -51,7 +52,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, loading }) =
               placeholder={intl.formatMessage({ id: 'common.status.all' })}
               allowClear
               options={statusOptions}
-              style={{ minWidth: 120 }}
+              className={styles.statusSelect}
             />
           </Form.Item>
         </Col>

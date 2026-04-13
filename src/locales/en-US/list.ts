@@ -14,4 +14,5 @@ export default {
   'list.error.title': 'Request Failed',
   'list.error.subtitle': 'Please check network connection and retry',
   'list.error.retry': 'Retry',
+  'list.pagination.total': 'Total {total} items',
 };

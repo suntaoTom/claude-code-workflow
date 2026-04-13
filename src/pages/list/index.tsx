@@ -11,35 +11,33 @@ import DataTable from '@/features/list/components/DataTable';
 
 const ListPage: React.FC = () => {
   const intl = useIntl();
-  const { data, total, loading, error, queryParams, onSearch, onPageChange, onReset } =
+  const { data, total, loading, error, queryParams, onSearch, onPageChange, onReset, refetch } =
     useListData();
-
-  if (error) {
-    return (
-      <Result
-        status="error"
-        title={intl.formatMessage({ id: 'list.error.title' })}
-        subTitle={intl.formatMessage({ id: 'list.error.subtitle' })}
-        extra={
-          <Button type="primary" onClick={onReset}>
-            {intl.formatMessage({ id: 'list.error.retry' })}
-          </Button>
-        }
-      />
-    );
-  }
 
   return (
     <Card>
       <SearchForm onSearch={onSearch} onReset={onReset} loading={loading} />
-      <DataTable
-        dataSource={data}
-        total={total}
-        current={queryParams.page}
-        pageSize={queryParams.pageSize}
-        loading={loading}
-        onPageChange={onPageChange}
-      />
+      {error ? (
+        <Result
+          status="error"
+          title={intl.formatMessage({ id: 'list.error.title' })}
+          subTitle={intl.formatMessage({ id: 'list.error.subtitle' })}
+          extra={
+            <Button type="primary" onClick={refetch}>
+              {intl.formatMessage({ id: 'list.error.retry' })}
+            </Button>
+          }
+        />
+      ) : (
+        <DataTable
+          dataSource={data}
+          total={total}
+          current={queryParams.page}
+          pageSize={queryParams.pageSize}
+          loading={loading}
+          onPageChange={onPageChange}
+        />
+      )}
     </Card>
   );
 };

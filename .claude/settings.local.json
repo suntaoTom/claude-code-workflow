@@ -18,7 +18,8 @@
       "Bash(which:*)",
       "Bash(pwd)",
       "Bash(env:*)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(grep -l \"AxiosRequestConfig\" src/.umi/plugin-request/*.ts)"
     ],
     "deny": [
       "Bash(rm -rf:*)"

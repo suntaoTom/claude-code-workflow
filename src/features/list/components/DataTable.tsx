@@ -62,7 +62,8 @@ const DataTable: React.FC<DataTableProps> = ({
         current,
         pageSize,
         total,
-        showTotal: (t) => `${t} items`,
+        showTotal: (t) =>
+          intl.formatMessage({ id: 'list.pagination.total' }, { total: t }),
         showSizeChanger: true,
         onChange: onPageChange,
       }}

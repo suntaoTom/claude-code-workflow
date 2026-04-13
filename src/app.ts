@@ -3,7 +3,8 @@
  * @module src
  * @dependencies @umijs/max
  */
-import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
+import { getIntl } from '@umijs/max';
+import type { AxiosRequestConfig, RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 
 /**
  * 全局初始化数据，供 useModel('@@initialState') 消费
@@ -27,7 +28,7 @@ export const layout: RunTimeLayoutConfig = () => {
 export const request: RequestConfig = {
   timeout: 10000,
   requestInterceptors: [
-    (config) => {
+    (config: AxiosRequestConfig) => {
       const headers = {
         ...config.headers,
         'Content-Type': 'application/json',
@@ -43,7 +44,9 @@ export const request: RequestConfig = {
   errorConfig: {
     errorThrower: (resData: { success: boolean; errorMessage?: string }) => {
       if (!resData.success) {
-        const error = new Error(resData.errorMessage || '请求失败');
+        const error = new Error(
+          resData.errorMessage || getIntl().formatMessage({ id: 'common.error' }),
+        );
         throw error;
       }
     },
