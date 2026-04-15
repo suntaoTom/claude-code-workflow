@@ -55,17 +55,54 @@
 
 ### 数据契约 (引用 OpenAPI)
 
-> **字段细节以 OpenAPI 为准** (见 `api-spec/openapi.yaml`), 本章节只写**业务相关信息**: 调用哪些接口、错误码如何映射到业务行为、mock 数据约定。
+> **字段细节以 OpenAPI 为准** (见 `api-spec/openapi.json`), 本章节只写**业务相关信息**: 调用哪些接口、错误码如何映射到业务行为、mock 数据约定。
 > 字段类型在 OpenAPI 一处定义, 前端通过 `pnpm gen:api` 自动生成 `src/types/api.ts`, 不在 PRD 重复维护。
 
 #### 调用的接口
 
-| 业务操作 | OpenAPI operationId | 方法 | 路径 |
-|---------|---------------------|------|------|
-| 搜索用户 | `searchUsers` | GET | `/api/users/search` |
-| 查看详情 | `getUserById` | GET | `/api/users/{id}` |
+| 业务操作 | operationId | 方法 | 路径 | 状态 |
+|---------|-------------|------|------|------|
+| 搜索用户 | `searchUsers` | GET | `/api/users/search` | ✅ 已存在 |
+| 查看详情 | `getUserById` | GET | `/api/users/{id}` | ✅ 已存在 |
+| 导出 Excel | `exportUsers` | POST | `/api/users/export` | 🆕 待后端实现 (见下方接口提议) |
 
-> 字段定义、参数约束、响应结构 → 看 `api-spec/openapi.yaml` 中的对应 operationId。
+> **状态字段**:
+> - ✅ 已存在: `api-spec/openapi.json` 里已定义, 直接用
+> - 🆕 待后端实现: 前端基于 PRD 写了 stub 提议, 评审后进 `openapi.local.json` 先开发, 后端实现后移除
+
+> 字段定义、参数约束、响应结构 → 看 `api-spec/openapi.json` (或 `openapi.local.json`) 中的对应 operationId。
+
+#### 接口提议 (仅当有 🆕 接口时填写)
+
+> 前端先写一份 OpenAPI stub, 经前后端评审后:
+> - 放入 `api-spec/openapi.local.json` 本地开发 (紧急兜底)
+> - 或直接由后端合并到主 `openapi.json` (推荐, 双方从此共用同一份)
+
+```yaml
+# 示例: 导出用户列表接口
+paths:
+  /api/users/export:
+    post:
+      operationId: exportUsers
+      summary: 导出符合筛选条件的用户为 Excel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone: { type: string }
+                status: { type: string, enum: [enabled, disabled] }
+      responses:
+        '200':
+          description: Excel 文件流
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+```
+
+> ⚠️ 评审通过后记得把状态从 🆕 改为 ✅, 避免前端以为还要等后端。
 
 #### 错误码映射 (业务侧定义)
 
@@ -86,7 +123,7 @@
   type SearchResp = paths['/api/users/search']['get']['responses']['200']['content']['application/json'];
   ```
 - 联调时通过 `config/proxy.ts` 切换到真实后端
-- 任何字段变更不要手改 mock, 先推后端更新 OpenAPI, 拉取新 yaml 后让 TS 编译告诉你哪里要改
+- 任何字段变更不要手改 mock, 先推后端更新 OpenAPI, 拉取新 json 后让 TS 编译告诉你哪里要改
 
 ### 交互流程
 

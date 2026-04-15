@@ -1,0 +1,3 @@
+# gen:api 的临时产物, 不提交
+.openapi.v3.json
+.openapi.merged.json
