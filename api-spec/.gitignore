@@ -1,2 +1,3 @@
-# 转换产物, 每次 gen:api 都会重新生成, 不提交
+# gen:api 的临时产物, 不提交
 .openapi.v3.json
+.openapi.merged.json
