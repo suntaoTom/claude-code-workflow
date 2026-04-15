@@ -38,6 +38,18 @@ pnpm gen:api
 cat src/types/api.ts
 ```
 
+## 版本兼容
+
+`gen:api` 脚本 (见 [scripts/gen-api.mjs](../scripts/gen-api.mjs)) 会自动识别输入:
+
+| 输入版本 | 处理方式 |
+|---------|---------|
+| OpenAPI 3.x (`"openapi": "3.x"`) | 直接生成类型 |
+| Swagger 2.0 (`"swagger": "2.0"`) | 先经 `swagger2openapi` 转成 3.x, 再生成类型 |
+
+转换产物 `.openapi.v3.json` 已在 [.gitignore](.gitignore), 不提交。
+后端只管给 `openapi.json`, 前端不关心版本差异。
+
 ## 何时需要更新
 
 | 触发场景 | 该做什么 |
