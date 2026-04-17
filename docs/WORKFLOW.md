@@ -568,6 +568,10 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 | 加新需求到现有模块 | PRD 加新 `## 二级标题`, 再跑 `/plan` |
 | 修 bug, 不算新需求 | 直接跟 AI 说, 不走完整流程 |
 | 不知道项目里有哪些命令 | 输入 `/` 看自动补全 |
+| 页面感觉卡顿想查性能 | `/ext-perf-audit workspace/src/features/xxx/` |
+| 合规/无障碍专项检查 | `/ext-a11y-check workspace/src/features/xxx/` |
+| 依赖安全巡检 | `/ext-dep-audit` |
+| 周报/交接需要变更报告 | `/ext-changelog --since 2026-04-10` |
 | 本地预览构建结果 | `/build web` → 浏览器打开 localhost 预览 |
 | Android APK 装手机试试 | `/build android` → `adb install <APK路径>` |
 | 构建没问题要部署了 | `/deploy web --env staging` (自动检测 /build 产物) |
@@ -577,6 +581,56 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 | 首次部署不知道怎么配 | `/deploy` → AI 输出配置模板 |
 | CLAUDE.md 改了不生效 | Ctrl+D 重启 claude 会话 |
 | 完全卡死 | 退出会话重启, 90% 玄学问题靠重启解决 |
+
+---
+
+## 🧰 扩展命令 (ext-*)
+
+除了八步法的主命令, 项目还提供了一批**按需使用**的扩展命令 (以 `ext-` 前缀区分), 用于代码质量专项审计和日常分析:
+
+| 命令 | 用途 | 典型场景 |
+|------|------|---------|
+| `/ext-perf-audit <目录>` | 前端性能审计 (包体积/渲染/网络/内存/首屏) | 页面感觉卡 / 发版前专项优化 |
+| `/ext-a11y-check <目录>` | 无障碍 WCAG 2.1 AA 合规检查 | 需要支持屏幕阅读器 / 键盘操作 / 合规要求 |
+| `/ext-dep-audit` | 依赖安全与健康度审计 (漏洞/过时/冗余/许可证) | 季度依赖巡检 / 安全告警响应 |
+| `/ext-changelog [--since]` | 可读的变更影响报告 (按模块聚合) | 周报 / 交接 / 复盘 (不同于 `/release` 的发版 changelog) |
+
+**命名约定**: `ext-` 前缀 = 扩展命令, 非八步法主流程。和主命令一样放在 `.claude/commands/` 下, 用 `/ext-xxx` 调用。
+
+**什么时候用**:
+- 主命令 (`/prd` `/code` `/test` ...) 是**必走流程**, 按八步法跑
+- 扩展命令是**可选专项**, 出现对应场景再用, 不必每次都跑
+
+---
+
+## 🪝 自动化 Hooks (静默守护)
+
+项目内置了 3 个 hooks (配置在 `.claude/settings.json`), 在后台自动运行, 不需要手动触发:
+
+| Hook | 触发时机 | 做什么 | 为什么需要 |
+|------|---------|--------|-----------|
+| **P0 硬编码检测** | 每次编辑/创建 `.ts` `.tsx` 文件后 | 扫描文件中的中文文案, 发现未走 i18n 的立刻警告 | 不用等 `/review` 才发现违反 P0 禁止硬编码规则 |
+| **未完成任务提醒** | 每次开启新会话时 | 扫描 `docs/tasks/` 下所有 tasks.json, 列出 `in-progress` 的任务 | 自动告诉你上次中断在哪, 不用自己翻 |
+| **提交前状态检查** | 执行 `git commit` 前 | 检查是否有任务仍为 `in-progress` 但即将提交 | 防止忘记把完成的任务改为 `done` |
+
+**你会看到的效果**:
+
+```
+# 开启会话时自动输出:
+📋 发现未完成的任务:
+  docs/tasks/tasks-login-2026-04-15.json: T005 T006
+
+# 编辑文件后, 如果有中文硬编码:
+⚠️ P0 硬编码检测: workspace/src/features/auth/LoginForm.tsx 中发现中文文案,请走 i18n
+  42:    <Button>登录</Button>
+  58:    message.success('登录成功');
+
+# git commit 前, 如果有未更新的任务状态:
+⚠️ 提交前检查: 以下任务仍为 in-progress,确认是否需要改为 done:
+  docs/tasks/tasks-login-2026-04-15.json: T005
+```
+
+> Hooks 只提醒, 不阻断。看到警告后自己决定要不要处理。
 
 ---
 
@@ -676,4 +730,4 @@ docs/prds/x.md       docs/tasks/x.json    workspace/src/..    workspace/tests/..
 | 编码风格 | [../.claude/rules/coding-style.md](../.claude/rules/coding-style.md) |
 | CI/CD Workflows | [../.github/workflows/](../.github/workflows/) — deploy-web / deploy-ios / deploy-android / deploy-harmony |
 | 技术栈 | [../.claude/rules/tech-stack.md](../.claude/rules/tech-stack.md) |
-| 全部命令 | [../.claude/commands/](../.claude/commands/) — `/prd` `/prd-check` `/plan` `/plan-check` `/code` `/test` `/review` `/bug-check` `/fix` `/release` `/build` `/deploy` `/start` |
+| 全部命令 | [../.claude/commands/](../.claude/commands/) — 主流程: `/prd` `/prd-check` `/plan` `/plan-check` `/code` `/test` `/review` `/bug-check` `/fix` `/release` `/build` `/deploy` `/start` · 扩展: `/ext-perf-audit` `/ext-a11y-check` `/ext-dep-audit` `/ext-changelog` |
