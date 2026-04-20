@@ -572,6 +572,9 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 | 合规/无障碍专项检查 | `/ext-a11y-check workspace/src/features/xxx/` |
 | 依赖安全巡检 | `/ext-dep-audit` |
 | 周报/交接需要变更报告 | `/ext-changelog --since 2026-04-10` |
+| 想看框架健康度 / 找规则漂移死引用 | `/meta-audit` (只读观察, 不自动改) |
+| 查历次元审计发现的问题 | 翻 [`docs/retrospectives/`](retrospectives/) |
+| 想知道某个设计为什么这么做 | 翻 [`docs/DECISIONS.md`](DECISIONS.md) |
 | 本地预览构建结果 | `/build web` → 浏览器打开 localhost 预览 |
 | Android APK 装手机试试 | `/build android` → `adb install <APK路径>` |
 | 构建没问题要部署了 | `/deploy web --env staging` (自动检测 /build 产物) |
@@ -614,13 +617,14 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 
 ## 🤖 子代理 (并行/保护 context)
 
-项目提供 3 个 sub-agent, 由主命令用 `Agent` 工具 spawn, 跑在**独立 context** 里, 支持并行:
+项目提供 4 个 sub-agent, 由主命令用 `Agent` 工具 spawn, 跑在**独立 context** 里, 支持并行:
 
 | 代理 | 职责 | 典型 spawn 场景 |
 |------|------|----------------|
 | [test-writer](../.claude/agents/test-writer.md) | 按 `@rules` 生成测试 + 跑验证 | `/code` 完成多文件后 / `/test` 多模块并行 |
 | [code-reviewer](../.claude/agents/code-reviewer.md) | 只读审查, 按规则扫问题 | `/review` 拆分大目录 / 提 PR 前第二视角 |
 | [bug-fixer](../.claude/agents/bug-fixer.md) | 修单个已分诊的 true-bug | `/fix` 处理多 bug 报告时并行 |
+| [meta-auditor](../.claude/agents/meta-auditor.md) | 上帝视角扫整个框架, 找不一致/漂移/死引用, 输出只读观察报告 | `/meta-audit` 命令触发 |
 
 **什么时候主 agent 会 spawn**:
 - 任务可独立并行 (5 个 bug 一起修比串行快 5 倍)
@@ -659,6 +663,46 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 ```
 
 > Hooks 只提醒, 不阻断。看到警告后自己决定要不要处理。
+
+---
+
+## 🔍 元审计 (框架健康度巡检)
+
+随着项目长大, 命令/技能/代理/规则互相引用, 容易出现规则漂移、死引用、追溯链断裂。`/meta-audit` 命令会 spawn `meta-auditor` 子代理做**只读**全量扫描, 产出观察报告供人 review。
+
+```bash
+# 完整扫描 (6 维度)
+/meta-audit
+
+# 只扫单一维度
+/meta-audit --focus=traceability
+/meta-audit --focus=dead-links
+
+# 自定义报告路径
+/meta-audit --output=/tmp/audit.md
+```
+
+**扫描 6 维度**:
+
+| 维度 | 扫什么 |
+|------|-------|
+| `rule-violations` | 静态规则违规 (中文硬编码 / inline style / any 类型 / 手写 API 类型) |
+| `doc-drift` | 规范文档 vs 实际代码不一致 (CLAUDE.md 说 A 代码做 B) |
+| `internal-consistency` | `.claude/` 和 `docs/` 内部自洽 (命令/技能列表对得上 README 吗) |
+| `traceability` | PRD → 任务 → 源码 → 测试追溯链是否断 |
+| `dead-links` | md 相对链接是否指向不存在的文件 |
+| `orphaned-assets` | 存在但无人引用的文件 |
+
+**产出**: `docs/retrospectives/<日期>-meta-audit.md` — 分 🔴必修 / 🟡建议修 / 🔵讨论 三段, 带趋势对比。
+
+**设计原则** (重要):
+
+- **只读观察, 不自动修复** — agent 工具权限限制在 `[Read, Grep, Glob, Write]`, 且 Write 只能写报告路径
+- **手动触发, 不定时跑** — 报告没人看就是噪音
+- **报告不可变** — 下次扫描自动对比趋势, 不要在旧报告里打勾「已处理」
+- **采纳建议走正常 PR 流程** — 改规则去 `.claude/rules/`, 改代码走 `/fix`, 讨论项开 GitHub issue
+
+**建议频率**: 里程碑后 / 1-2 周一次 / 加了新机制后跑一次。详见 [retrospectives/README.md](retrospectives/README.md)。
 
 ---
 
@@ -761,5 +805,7 @@ docs/prds/x.md       docs/tasks/x.json    workspace/src/..    workspace/tests/..
 | .claude 总索引 | [../.claude/README.md](../.claude/README.md) |
 | CI/CD Workflows | [../.github/workflows/](../.github/workflows/) — deploy-web / deploy-ios / deploy-android / deploy-harmony |
 | 技术栈 | [../.claude/rules/tech-stack.md](../.claude/rules/tech-stack.md) |
-| 全部命令 | 主流程 [`../.claude/commands/`](../.claude/commands/): `/prd` `/prd-check` `/plan` `/plan-check` `/code` `/test` `/review` `/bug-check` `/fix` `/release` `/build` `/deploy` `/start` |
+| 工程复盘报告 | [retrospectives/README.md](retrospectives/README.md) — `/meta-audit` 产出的只读观察, 不可变快照 |
+| 架构决策记录 (ADR) | [DECISIONS.md](DECISIONS.md) — 框架重大决策的背景/理由/替代方案 |
+| 全部命令 | 主流程 [`../.claude/commands/`](../.claude/commands/): `/prd` `/prd-check` `/plan` `/plan-check` `/code` `/test` `/review` `/bug-check` `/fix` `/release` `/build` `/deploy` `/start` `/meta-audit` |
 | 扩展技能包 | [`../.claude/skills/`](../.claude/skills/) — `ext-perf-audit` / `ext-a11y-check` / `ext-dep-audit` / `ext-changelog` |

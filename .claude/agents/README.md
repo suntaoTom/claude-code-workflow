@@ -9,6 +9,7 @@
 | [test-writer.md](test-writer.md) | 为指定源文件生成测试 (读 `@rules` → 按条写 `it()`) | `/code` 完成后 / `/test` 多模块并行 |
 | [code-reviewer.md](code-reviewer.md) | 只读审查一个文件/目录, 输出问题清单 | `/review` 大目录拆分 / 提 PR 前自检 |
 | [bug-fixer.md](bug-fixer.md) | 修复单个 bug (来自 bug-report) | `/fix` 处理多 bug 报告时并行 |
+| [meta-auditor.md](meta-auditor.md) | **上帝视角**元审计, 扫整个工程找不一致/漂移/死引用, 输出 `docs/retrospectives/` 报告 | `/meta-audit` 命令触发 |
 
 ## 子代理 vs 斜杠命令
 

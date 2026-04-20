@@ -47,11 +47,11 @@
 
 ## 当前项目状态
 
-**命令** (13): `/prd` `/prd-check` `/plan` `/plan-check` `/code` `/test` `/review` `/bug-check` `/fix` `/build` `/deploy` `/release` `/start`
+**命令** (14): `/prd` `/prd-check` `/plan` `/plan-check` `/code` `/test` `/review` `/bug-check` `/fix` `/build` `/deploy` `/release` `/start` `/meta-audit`
 
 **技能包** (4): `ext-dep-audit` `ext-perf-audit` `ext-a11y-check` `ext-changelog`
 
-**代理** (3): `test-writer` `code-reviewer` `bug-fixer` — 详见 [agents/README.md](agents/README.md)
+**代理** (4): `test-writer` `code-reviewer` `bug-fixer` `meta-auditor` — 详见 [agents/README.md](agents/README.md)
 
 **钩子** (3): `check-hardcode` `check-tasks-status` `pre-commit-check` — 详见 [hooks/README.md](hooks/README.md)
 
