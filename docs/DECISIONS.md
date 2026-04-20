@@ -31,6 +31,91 @@
 
 ---
 
+## 2026-04-20: 在线文档 (飞书/Notion/语雀 等) 不做 API 集成, 走「导出 + prd-import」路径
+
+**背景**: `prd-import` 支持本地 `.docx/.xlsx/.pptx` 后, 下一个问题是在线文档。团队常用飞书 / Notion / 语雀 / 腾讯文档 / Google Docs 写需求, 产品给过来的往往是在线链接而非文件。"能不能让 `/prd` 直接读在线链接?"是自然诉求。
+
+**决策**: **不自己做任何平台的 API 集成**。官方路径:
+1. **路径 A (推荐, 立即可用)**: 用户在平台里导出为 `.md` (Notion / 语雀) 或 `.docx` (飞书 / 腾讯 / Google / Confluence / 钉钉 / 石墨), 然后按现有 `prd-import` 流程处理
+2. **路径 B (进阶, 用户自配)**: 推荐 MCP server (Notion / Google Drive 有较成熟的), 项目**不内置配置**, 用户自己写到 `~/.claude/mcp.json`
+
+各平台导出路径的详细指引写入 [.claude/skills/prd-import/references/formats.md](../.claude/skills/prd-import/references/formats.md#在线文档怎么办)。
+
+**理由**:
+- **维护成本不可承受** — 飞书 / Notion / 语雀 / Google 认证机制完全不同 (tenant_access_token / integration token / user token / OAuth), token 刷新 / 权限 scope / rate limit / SDK 版本管理全都是活, 做全意味着把框架从「工具」升级成「运维项目」
+- **ROI 太低** — 90% 的团队只用 1-2 个平台, 做全是浪费; 只做一家又会被其他团队问「为什么不支持 X」
+- **路径 A 已经够好** — 所有平台都有导出功能, 3 分钟操作成本, 覆盖 100% 平台, 一次学会永远适用
+- **脆弱性** — 平台前端改版 / API 弃用 / token 策略调整, 任何一个都会让集成挂掉, 维护债持续累积
+- **安全性** — 集成要存 token, token 泄露影响整个账号; 不集成则无此风险
+- **MCP 正好解决这个诉求** — 社区和 Anthropic 官方的 MCP server 是「用户侧」决策, 不是「项目侧」决策, 项目只需推荐不需维护
+
+**替代方案 (放弃)**:
+- **自己写飞书集成** — 即使只做飞书 (国内团队高频), 仍要管 tenant_access_token 刷新 + 文档 token 权限 + 富文本 block 到 markdown 的转换层, 预计 500+ 行代码 + 长期维护, 且只解决一家问题
+- **URL 抓取 (公开链接)** — 只对公开分享的文档生效, 大多团队内部文档不公开; HTML 解析脆弱; 维护成本/收益比极差
+- **做一个统一的「在线文档适配器」抽象** — 看似优雅, 实际每个平台的数据模型差异大, 抽象出来的接口要么约束太紧 (特定平台特性丢失) 要么太松 (约等于没抽象), 是典型的过早抽象陷阱
+
+**影响**:
+- `.claude/skills/prd-import/SKILL.md` — 输入类型表加一行「在线文档」, 指向参考文档
+- `.claude/skills/prd-import/references/formats.md` — 加「在线文档怎么办」章节 (含 9 个主流平台的导出路径表 + MCP 指引 + 拒绝 API 集成的理由)
+- `docs/WORKFLOW.md` — Step 1 输入类型表 + 速查表各加一行
+
+**落款**: 如果未来团队高度集中用某一个平台且手动导出成本确实高, **才**考虑做那一家的轻量集成 (只做只读, 不做写入), 但仍要评估是否用 MCP 替代。不要"为了完整性"做一堆集成。
+
+---
+
+## 2026-04-20: 非 md 需求格式入口抽为 prd-import skill
+
+**背景**: `/prd` 命令只接受文字 / markdown / PDF / 图片 (Claude Code 原生支持), 但实际产品/后端常塞 `.docx / .xlsx / .pptx`, 这些是二进制 zip+XML, Claude 读不了。用户要么手动粘贴 (长文档粘不完)、要么自己另存为 PDF (格式丢失)。整个 `/prd` 主流程的入口被卡死。
+
+**决策**: 新增 `.claude/skills/prd-import/` skill 包 + `workspace/scripts/prd-import.mjs` 脚本, 负责 Word/Excel/PPT → markdown 转换。产物落盘到 `docs/prds/_imports/<basename>-<日期>.md`, 然后跑 `/prd @<产物>` 走正常澄清流程。`/prd` 本身不动。
+
+**理由**:
+- **分层清晰** — 格式转换是确定性脚本任务 (有数据输入, 有标准输出), 放 skills/ 合适; `/prd` 是纯思考, 留 commands/
+- **产物可追溯** — 转换结果保留在 `_imports/`, 评审 PRD 时能对照原文, 不是一次性黑盒
+- **依赖最小** — 用 `mammoth` (docx) + `xlsx` (excel) 两个 npm 包, 装在 workspace/ 里复用现有 node_modules; PPTX 用 Node 原生 unzip + 正则, 不加依赖
+- **不破坏既有接口** — `/prd` 的调用方式不变, 只是多了一种预处理路径; 用户输入 md/文字/PDF/图片时零成本
+
+**替代方案 (放弃)**:
+- **扩展 `/prd` 自动识别并转换** — 把脚本调用塞进 `/prd` 的 prompt, 体验最顺但违反 skill/command 边界 (commands 是纯 prompt, 不该依赖外部脚本)
+- **依赖系统 pandoc** — 不是所有用户环境都装, 硬依赖增加首次使用摩擦; npm 包装在 workspace 里随 `pnpm install` 自动搞定
+- **让用户手动粘贴或另存 PDF** — 可行但用户体验差, 复杂表格和长文档会丢内容
+
+**命名选择**: 不加 `ext-` 前缀。`ext-*` 语义是"可选扩展" (性能审计 / a11y 等, 不跑也能开发); `prd-import` 是**主流程入口的必要补充** (没它, doc 类需求进不来 `/prd`), 所以归为"无前缀 = 主流程配套技能"。
+
+**影响**:
+- 新增: `.claude/skills/prd-import/{SKILL.md, references/formats.md}`, `workspace/scripts/prd-import.mjs`, `docs/prds/_imports/{.gitkeep, README.md}`
+- 修改: `workspace/package.json` (+mammoth, +xlsx, +prd:import 脚本), 根 `package.json` (+prd:import 代理), `.claude/skills/README.md` (登记 + 加命名约定表), `docs/WORKFLOW.md` (Step 1 加非 md 分支, 速查表加一行)
+
+---
+
+## 2026-04-20: 测试文件位置统一到 workspace/tests/ (推翻「与源文件同目录」)
+
+**背景**: `.claude/rules/testing.md` 和 `.claude/agents/test-writer.md` 原定「与源文件同目录」, 但 `.claude/commands/test.md` 和现存代码 (`workspace/tests/features/list/`) 已经走 `workspace/tests/` 镜像 `src/` 结构。2026-04-20 meta-audit 报告 (Top 3 必修) 捕到这个冲突 — 规则跟代码分叉会导致 test-writer 生成新测试时再形成第二套布局。
+
+**决策**: 统一到 `workspace/tests/` 镜像 `workspace/src/` 目录结构。所有单元/组件测试路径 `workspace/tests/<src 镜像路径>/<name>.test.ts(x)`; E2E 仍在 `workspace/tests/e2e/`。同步更新:
+- `.claude/rules/testing.md` (位置章节)
+- `.claude/agents/test-writer.md` (Step 3 位置选择表)
+- `.claude/agents/meta-auditor.md` (追溯链维度检查路径)
+- `.claude/agents/bug-fixer.md` (测试补齐路径)
+- `CLAUDE.md` (测试规范概要「位置」)
+- `.claude/commands/test.md` **保持不变** (它从一开始就是对的)
+
+**理由**:
+- **与现状一致** — 已有 `workspace/tests/features/list/` 是这个布局, 规则跟代码而不是让代码迁就规则
+- **src/ 目录干净** — `src/` 只放生产代码, 打包 / tsc / 覆盖率扫描 / 路径过滤都更简单
+- **测试导入走 `@/` 别名** — 避免相对路径爬 `../../../`, 源文件改名测试不跟着动
+- **CI 命令统一** — 一条 `pnpm test workspace/tests/` 跑全量, 不用拼 src 下的散装路径
+
+**替代方案 (放弃)**:
+- **与源文件同目录 (旧规则)** — 好处是「改源码立刻看到测试」, 但 src/ 混产物 + 导入路径一坨相对路径 + tsc/lint/build 要额外过滤规则
+- **`__tests__/` 子目录 (Jest 风格)** — 半吊子, 两种问题都占
+
+**推翻**: 本条推翻 2026-04-20 引入的「co-located tests」隐含规则 (此前未单独立项, 但散落在 `testing.md` / `test-writer.md` / `CLAUDE.md` 三处)。
+
+**影响**: 上方列出的 5 个 `.claude/` 文件 + `CLAUDE.md`; 现有 `workspace/tests/features/list/` 位置**不迁**, 它本来就对。
+
+---
+
 ## 2026-04-20: 引入元审计机制 (meta-auditor + /meta-audit)
 
 **背景**: 框架越长越大, 命令/技能/代理/规则互相引用, 担心规则漂移、死引用、内部不一致。人眼巡检不现实。

@@ -105,6 +105,32 @@ git commit
 
 ### Step 1 — 需求变 PRD
 
+#### 如果需求是非 markdown 格式 (Word / Excel / PPT)
+
+先用 `prd-import` skill 转成 markdown, 再跑 `/prd`:
+
+```bash
+# 产品给了 Word 文档
+pnpm prd:import requirements/登录需求.docx
+# → docs/prds/_imports/登录需求-2026-04-20.md
+
+# 然后把转出来的 md 当输入
+/prd @docs/prds/_imports/登录需求-2026-04-20.md
+```
+
+| 输入类型 | 处理方式 |
+|---------|---------|
+| 文字 / `.md` / `.txt` | 直接跑 `/prd` |
+| **`.docx` / `.xlsx` / `.pptx`** | **先跑 `pnpm prd:import`, 再跑 `/prd @<转换产物>`** |
+| `.pdf` | 直接 `/prd @<file>.pdf` (Claude Code 原生支持) |
+| 图片 (`.png` / `.jpg`) | 直接 `/prd @<file>.png` (多模态识别) |
+| `.doc` / `.xls` / `.ppt` (老格式) | 用 Word/WPS 另存为新格式 (`.docx` 等) 后再走转换 |
+| **在线文档** (飞书/Notion/语雀/腾讯文档/Google Docs) | 平台里导出 `.md` 或 `.docx`, 再按上面对应行处理。Notion / 语雀 直接导 `.md` 最省事。详见 [prd-import/references/formats.md](../.claude/skills/prd-import/references/formats.md#在线文档怎么办) |
+
+首次使用 `prd:import` 前需装依赖一次: `cd workspace && pnpm install` (自动装 mammoth + xlsx)。详细说明见 [.claude/skills/prd-import/SKILL.md](../.claude/skills/prd-import/SKILL.md)。
+
+#### 直接用文字 / 已有 md 时
+
 ```bash
 /prd 我要做一个用户登录功能
 ```
@@ -424,7 +450,7 @@ git commit -m "feat(login): 实现登录功能"
 
 `.github/workflows/claude-fix.yml` 已写好, 启用后:
 - 在 GitHub issue 里评论 `@claude fix` → workflow 自动触发 `/fix --pr --headless`
-- 启用步骤见 [.github/README.md](../.github/README.md)
+- 启用步骤见 [.github/SETUP.md](../.github/SETUP.md)
 
 **未启用时命令本地跑就行**, 和启用后用的是同一份 `/fix.md`。
 
@@ -562,12 +588,14 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 | 本地发现某个 bug 想让 AI 修 | `/fix <描述>` → `/bug-check` 分诊+固化 → review → `/fix @<报告>` |
 | 测试端 AI 测出来一堆 bug | 先 `/bug-check @<报告>` 自检, 再 `/fix @<报告> --pr` |
 | 不确定是 bug 还是缺需求 | `/bug-check <描述>` — 分诊结果告诉你走 `/fix` 还是 `/prd` |
-| 想要 issue 评论触发自动修 | 启用 `.github/workflows/claude-fix.yml` (见 `.github/README.md`) |
+| 想要 issue 评论触发自动修 | 启用 `.github/workflows/claude-fix.yml` (见 `.github/SETUP.md`) |
 | 只补缺失的测试 | `/test <目录> --only-missing` |
 | 强制重新生成全部测试 | `/test <目录> --force` |
 | 加新需求到现有模块 | PRD 加新 `## 二级标题`, 再跑 `/plan` |
 | 修 bug, 不算新需求 | 直接跟 AI 说, 不走完整流程 |
 | 不知道项目里有哪些命令 | 输入 `/` 看自动补全 |
+| 产品给了 Word/Excel/PPT 需求 | `pnpm prd:import <file>` 转 md, 再跑 `/prd @<产物>` |
+| 产品给了飞书/Notion/语雀链接 | 平台里导出为 `.md` (Notion/语雀) 或 `.docx` (其他), 再按上一行处理 |
 | 页面感觉卡顿想查性能 | `/ext-perf-audit workspace/src/features/xxx/` |
 | 合规/无障碍专项检查 | `/ext-a11y-check workspace/src/features/xxx/` |
 | 依赖安全巡检 | `/ext-dep-audit` |
@@ -795,7 +823,7 @@ docs/prds/x.md       docs/tasks/x.json    workspace/src/..    workspace/tests/..
 | PRD 怎么审 | [prds/REVIEW.md](prds/REVIEW.md) |
 | 测试端 AI 测试对接 | [bug-reports/README.md](bug-reports/README.md) |
 | Bug 报告模板 | [bug-reports/_template.md](bug-reports/_template.md) |
-| GitHub 自动化 (可选启用) | [../.github/README.md](../.github/README.md) |
+| GitHub 自动化 (可选启用) | [../.github/SETUP.md](../.github/SETUP.md) |
 | OpenAPI 协作 | [../workspace/api-spec/README.md](../workspace/api-spec/README.md) |
 | 代码注释规范 | [../.claude/rules/file-docs.md](../.claude/rules/file-docs.md) |
 | 禁止硬编码 | [../.claude/rules/no-hardcode.md](../.claude/rules/no-hardcode.md) |
