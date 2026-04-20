@@ -125,6 +125,7 @@ pnpm prd:import requirements/登录需求.docx
 | `.pdf` | 直接 `/prd @<file>.pdf` (Claude Code 原生支持) |
 | 图片 (`.png` / `.jpg`) | 直接 `/prd @<file>.png` (多模态识别) |
 | `.doc` / `.xls` / `.ppt` (老格式) | 用 Word/WPS 另存为新格式 (`.docx` 等) 后再走转换 |
+| **在线文档** (飞书/Notion/语雀/腾讯文档/Google Docs) | 平台里导出 `.md` 或 `.docx`, 再按上面对应行处理。Notion / 语雀 直接导 `.md` 最省事。详见 [prd-import/references/formats.md](../.claude/skills/prd-import/references/formats.md#在线文档怎么办) |
 
 首次使用 `prd:import` 前需装依赖一次: `cd workspace && pnpm install` (自动装 mammoth + xlsx)。详细说明见 [.claude/skills/prd-import/SKILL.md](../.claude/skills/prd-import/SKILL.md)。
 
@@ -594,6 +595,7 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 | 修 bug, 不算新需求 | 直接跟 AI 说, 不走完整流程 |
 | 不知道项目里有哪些命令 | 输入 `/` 看自动补全 |
 | 产品给了 Word/Excel/PPT 需求 | `pnpm prd:import <file>` 转 md, 再跑 `/prd @<产物>` |
+| 产品给了飞书/Notion/语雀链接 | 平台里导出为 `.md` (Notion/语雀) 或 `.docx` (其他), 再按上一行处理 |
 | 页面感觉卡顿想查性能 | `/ext-perf-audit workspace/src/features/xxx/` |
 | 合规/无障碍专项检查 | `/ext-a11y-check workspace/src/features/xxx/` |
 | 依赖安全巡检 | `/ext-dep-audit` |

@@ -31,6 +31,38 @@
 
 ---
 
+## 2026-04-20: 在线文档 (飞书/Notion/语雀 等) 不做 API 集成, 走「导出 + prd-import」路径
+
+**背景**: `prd-import` 支持本地 `.docx/.xlsx/.pptx` 后, 下一个问题是在线文档。团队常用飞书 / Notion / 语雀 / 腾讯文档 / Google Docs 写需求, 产品给过来的往往是在线链接而非文件。"能不能让 `/prd` 直接读在线链接?"是自然诉求。
+
+**决策**: **不自己做任何平台的 API 集成**。官方路径:
+1. **路径 A (推荐, 立即可用)**: 用户在平台里导出为 `.md` (Notion / 语雀) 或 `.docx` (飞书 / 腾讯 / Google / Confluence / 钉钉 / 石墨), 然后按现有 `prd-import` 流程处理
+2. **路径 B (进阶, 用户自配)**: 推荐 MCP server (Notion / Google Drive 有较成熟的), 项目**不内置配置**, 用户自己写到 `~/.claude/mcp.json`
+
+各平台导出路径的详细指引写入 [.claude/skills/prd-import/references/formats.md](../.claude/skills/prd-import/references/formats.md#在线文档怎么办)。
+
+**理由**:
+- **维护成本不可承受** — 飞书 / Notion / 语雀 / Google 认证机制完全不同 (tenant_access_token / integration token / user token / OAuth), token 刷新 / 权限 scope / rate limit / SDK 版本管理全都是活, 做全意味着把框架从「工具」升级成「运维项目」
+- **ROI 太低** — 90% 的团队只用 1-2 个平台, 做全是浪费; 只做一家又会被其他团队问「为什么不支持 X」
+- **路径 A 已经够好** — 所有平台都有导出功能, 3 分钟操作成本, 覆盖 100% 平台, 一次学会永远适用
+- **脆弱性** — 平台前端改版 / API 弃用 / token 策略调整, 任何一个都会让集成挂掉, 维护债持续累积
+- **安全性** — 集成要存 token, token 泄露影响整个账号; 不集成则无此风险
+- **MCP 正好解决这个诉求** — 社区和 Anthropic 官方的 MCP server 是「用户侧」决策, 不是「项目侧」决策, 项目只需推荐不需维护
+
+**替代方案 (放弃)**:
+- **自己写飞书集成** — 即使只做飞书 (国内团队高频), 仍要管 tenant_access_token 刷新 + 文档 token 权限 + 富文本 block 到 markdown 的转换层, 预计 500+ 行代码 + 长期维护, 且只解决一家问题
+- **URL 抓取 (公开链接)** — 只对公开分享的文档生效, 大多团队内部文档不公开; HTML 解析脆弱; 维护成本/收益比极差
+- **做一个统一的「在线文档适配器」抽象** — 看似优雅, 实际每个平台的数据模型差异大, 抽象出来的接口要么约束太紧 (特定平台特性丢失) 要么太松 (约等于没抽象), 是典型的过早抽象陷阱
+
+**影响**:
+- `.claude/skills/prd-import/SKILL.md` — 输入类型表加一行「在线文档」, 指向参考文档
+- `.claude/skills/prd-import/references/formats.md` — 加「在线文档怎么办」章节 (含 9 个主流平台的导出路径表 + MCP 指引 + 拒绝 API 集成的理由)
+- `docs/WORKFLOW.md` — Step 1 输入类型表 + 速查表各加一行
+
+**落款**: 如果未来团队高度集中用某一个平台且手动导出成本确实高, **才**考虑做那一家的轻量集成 (只做只读, 不做写入), 但仍要评估是否用 MCP 替代。不要"为了完整性"做一堆集成。
+
+---
+
 ## 2026-04-20: 非 md 需求格式入口抽为 prd-import skill
 
 **背景**: `/prd` 命令只接受文字 / markdown / PDF / 图片 (Claude Code 原生支持), 但实际产品/后端常塞 `.docx / .xlsx / .pptx`, 这些是二进制 zip+XML, Claude 读不了。用户要么手动粘贴 (长文档粘不完)、要么自己另存为 PDF (格式丢失)。整个 `/prd` 主流程的入口被卡死。
