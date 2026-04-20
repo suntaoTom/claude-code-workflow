@@ -141,6 +141,7 @@ claude
 | 查历次健康度扫描 | [docs/retrospectives/](docs/retrospectives/) — `/meta-audit` 只读观察报告 |
 | 前后端协作 / OpenAPI 流程 | [docs/WORKFLOW.md#🔌-前后端协作](docs/WORKFLOW.md#-前后端协作-重点) |
 | 测试端 AI 怎么对接 | [docs/bug-reports/README.md](docs/bug-reports/README.md) |
+| 启用 GitHub 自动化 (claude-fix / deploy) | [.github/SETUP.md](.github/SETUP.md) |
 
 ---
 

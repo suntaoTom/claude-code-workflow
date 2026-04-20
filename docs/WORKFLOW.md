@@ -424,7 +424,7 @@ git commit -m "feat(login): 实现登录功能"
 
 `.github/workflows/claude-fix.yml` 已写好, 启用后:
 - 在 GitHub issue 里评论 `@claude fix` → workflow 自动触发 `/fix --pr --headless`
-- 启用步骤见 [.github/README.md](../.github/README.md)
+- 启用步骤见 [.github/SETUP.md](../.github/SETUP.md)
 
 **未启用时命令本地跑就行**, 和启用后用的是同一份 `/fix.md`。
 
@@ -562,7 +562,7 @@ git add workspace/api-spec/openapi.json workspace/src/types/api.ts <受影响的
 | 本地发现某个 bug 想让 AI 修 | `/fix <描述>` → `/bug-check` 分诊+固化 → review → `/fix @<报告>` |
 | 测试端 AI 测出来一堆 bug | 先 `/bug-check @<报告>` 自检, 再 `/fix @<报告> --pr` |
 | 不确定是 bug 还是缺需求 | `/bug-check <描述>` — 分诊结果告诉你走 `/fix` 还是 `/prd` |
-| 想要 issue 评论触发自动修 | 启用 `.github/workflows/claude-fix.yml` (见 `.github/README.md`) |
+| 想要 issue 评论触发自动修 | 启用 `.github/workflows/claude-fix.yml` (见 `.github/SETUP.md`) |
 | 只补缺失的测试 | `/test <目录> --only-missing` |
 | 强制重新生成全部测试 | `/test <目录> --force` |
 | 加新需求到现有模块 | PRD 加新 `## 二级标题`, 再跑 `/plan` |
@@ -795,7 +795,7 @@ docs/prds/x.md       docs/tasks/x.json    workspace/src/..    workspace/tests/..
 | PRD 怎么审 | [prds/REVIEW.md](prds/REVIEW.md) |
 | 测试端 AI 测试对接 | [bug-reports/README.md](bug-reports/README.md) |
 | Bug 报告模板 | [bug-reports/_template.md](bug-reports/_template.md) |
-| GitHub 自动化 (可选启用) | [../.github/README.md](../.github/README.md) |
+| GitHub 自动化 (可选启用) | [../.github/SETUP.md](../.github/SETUP.md) |
 | OpenAPI 协作 | [../workspace/api-spec/README.md](../workspace/api-spec/README.md) |
 | 代码注释规范 | [../.claude/rules/file-docs.md](../.claude/rules/file-docs.md) |
 | 禁止硬编码 | [../.claude/rules/no-hardcode.md](../.claude/rules/no-hardcode.md) |

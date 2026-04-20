@@ -9,7 +9,7 @@
 # 本 workflow 只做一件事: 把外部信号翻译成 `/fix --pr --headless` 调用,
 # 具体修复流程在 .claude/commands/fix.md 里定义, 修改 /fix 逻辑不用改本文件。
 #
-# 启用前置条件 (见 .github/README.md):
+# 启用前置条件 (见 .github/SETUP.md):
 #   - Repo Settings → Secrets → 添加 ANTHROPIC_API_KEY
 #   - Repo Settings → Actions → General → Workflow permissions 勾 "Read and write"
 #   - Repo Settings → Actions → General → 勾 "Allow GitHub Actions to create pull requests"
