@@ -1,6 +1,8 @@
 <div align="center">
 
-# Claude Code Work
+**Language:** [**English**](https://github.com/suntaoTom/claude-code-work/blob/main/README.md) | [简体中文](https://github.com/suntaoTom/claude-code-work/blob/main-zh/README.md)
+
+# Claude Code WorkFlow
 
 <p><strong>AI 驱动的研发工作流框架</strong></p>
 
@@ -54,10 +56,10 @@
 
 AI 协作研发的两个老问题, 框架用闸门和档案直接回答:
 
-| 问题             | 表现             | 框架怎么治                                                        |
-| ---------------- | ---------------- | ----------------------------------------------------------------- |
-| **AI 没约束**   | 瞎写、乱改、绕 bug | 硬闸门 (需求完备性 / `@rules` 追溯链 / 禁硬编码 / Hooks 静默守护) |
-| **AI 没记忆**   | 每次会话从零猜   | 档案沉淀 (ADR / retrospectives / tasks.json) 跨会话可读             |
+| 问题          | 表现               | 框架怎么治                                                        |
+| ------------- | ------------------ | ----------------------------------------------------------------- |
+| **AI 没约束** | 瞎写、乱改、绕 bug | 硬闸门 (需求完备性 / `@rules` 追溯链 / 禁硬编码 / Hooks 静默守护) |
+| **AI 没记忆** | 每次会话从零猜     | 档案沉淀 (ADR / retrospectives / tasks.json) 跨会话可读           |
 
 > 框架**不绑技术栈, 不绑领域**。工种特化在 `.claude/rules/*.md` 和 `workspace/` 里做。
 
@@ -76,13 +78,13 @@ AI 协作研发的两个老问题, 框架用闸门和档案直接回答:
 
 ## 框架五件套
 
-| 部件                 | 位置                                   | 触发方式       | 适合                 |
-| -------------------- | -------------------------------------- | -------------- | -------------------- |
-| **命令** (commands) | [.claude/commands/](.claude/commands/) | 用户 `/<name>` | 主工作流 (纯思考)    |
-| **技能包** (skills) | [.claude/skills/](.claude/skills/)     | 显式或 AI 自动 | 跑脚本拿数据         |
-| **子代理** (agents) | [.claude/agents/](.claude/agents/)     | 主命令 spawn   | 并行 / 保护 context  |
-| **钩子** (hooks)     | [.claude/hooks/](.claude/hooks/)       | 事件自动       | 静默守护 (不阻断)    |
-| **规则** (rules)     | [.claude/rules/](.claude/rules/)       | AI 自动遵守    | 长期稳定的产出约束   |
+| 部件                | 位置                                   | 触发方式       | 适合                |
+| ------------------- | -------------------------------------- | -------------- | ------------------- |
+| **命令** (commands) | [.claude/commands/](.claude/commands/) | 用户 `/<name>` | 主工作流 (纯思考)   |
+| **技能包** (skills) | [.claude/skills/](.claude/skills/)     | 显式或 AI 自动 | 跑脚本拿数据        |
+| **子代理** (agents) | [.claude/agents/](.claude/agents/)     | 主命令 spawn   | 并行 / 保护 context |
+| **钩子** (hooks)    | [.claude/hooks/](.claude/hooks/)       | 事件自动       | 静默守护 (不阻断)   |
+| **规则** (rules)    | [.claude/rules/](.claude/rules/)       | AI 自动遵守    | 长期稳定的产出约束  |
 
 边界和添加规范详见 [.claude/README.md](.claude/README.md)。
 
@@ -210,12 +212,12 @@ claude
 
 ## 分支说明
 
-| 分支          | 定位                                                        |
-| ------------- | ----------------------------------------------------------- |
-| `main`        | 框架本体介绍 (与工种无关, 你在这)                           |
-| `ai-frontend` | 前端工种实现 (UmiJS + React + antd + Vitest + Playwright)  |
-| `feature`     | 开发集成分支                                                |
-| `Harness`     | 框架本体迭代分支                                            |
+| 分支          | 定位                                                      |
+| ------------- | --------------------------------------------------------- |
+| `main`        | 框架本体介绍 (与工种无关, 你在这)                         |
+| `ai-frontend` | 前端工种实现 (UmiJS + React + antd + Vitest + Playwright) |
+| `feature`     | 开发集成分支                                              |
+| `Harness`     | 框架本体迭代分支                                          |
 
 想看具体工种的完整示例, 切到对应分支 (例: `git checkout ai-frontend`)。未来会陆续补 `ai-backend` / `ai-data` 等分支。
 
@@ -225,7 +227,7 @@ claude
 
 | 我是...                               | 第一个打开                                                                |
 | ------------------------------------- | ------------------------------------------------------------------------- |
-| **第一次接手框架**                   | [docs/WORKFLOW.md](docs/WORKFLOW.md) — 八步法操作手册                     |
+| **第一次接手框架**                    | [docs/WORKFLOW.md](docs/WORKFLOW.md) — 八步法操作手册                     |
 | 想把框架迁移到某个工种                | [docs/ADAPTING.md](docs/ADAPTING.md) — 跨工种适配清单                     |
 | 要改框架机制 (加命令 / skill / agent) | [.claude/README.md](.claude/README.md) — 五类部件的边界                   |
 | 查框架怎么演变的                      | [docs/DECISIONS.md](docs/DECISIONS.md) — 架构决策记录 (ADR)               |
