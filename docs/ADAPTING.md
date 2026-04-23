@@ -1,282 +1,282 @@
-# 跨工种适配清单
+# Cross-Discipline Adaptation Checklist
 
-> 本仓库当前是「AI 驱动的**前端**研发工作流框架」。这套骨架的绝大部分机制是领域无关的, 换一套 `rules/` + `workspace/` 就能用于后端 / 数据 / 移动 / DevOps / QA / 设计 / 产品 / 写作 / 科研 等任何工种。
+> This repository is currently an "AI-driven **frontend** engineering workflow framework." The vast majority of its mechanisms are domain-agnostic — swap out `rules/` and `workspace/` and it works for backend / data / mobile / DevOps / QA / design / product / writing / research, and any other discipline.
 >
-> 本文档列出**哪些照搬、哪些替换、哪些可选**, 以及一份从前端模板迁移到其他工种的步骤清单。
+> This document outlines **what to keep as-is, what to replace, and what is optional**, along with a step-by-step migration checklist for adapting from the frontend template to another discipline.
 
 ---
 
-## 三层结构
+## Three-Layer Structure
 
-把框架拆成三层, 决定每层能不能跨工种:
+Break the framework into three layers to decide what can cross discipline boundaries:
 
-| 层 | 内容 | 跨工种可复用? |
-|----|------|-------------|
-| **内核层** | 协作机制 + 工作流骨架 + 可追溯 + 硬性闸门 + 设计原则 | ✅ 照搬, 不用改 |
-| **领域层** | `rules/` 里的编码/测试/硬编码规范 | ⚠️ 保留结构, 替换内容 |
-| **工种特化层** | `workspace/` 工作区 + `commands/` 里的领域假设 | ❌ 整个替换 |
+| Layer | Contents | Cross-Discipline Reusability |
+|-------|----------|------------------------------|
+| **Core Layer** | Collaboration mechanisms + workflow skeleton + traceability + hard gates + design principles | ✅ Keep as-is, no changes needed |
+| **Domain Layer** | Coding / testing / no-hardcode rules in `rules/` | ⚠️ Keep the structure, replace the content |
+| **Discipline-Specific Layer** | `workspace/` workspace + domain assumptions in `commands/` | ❌ Replace entirely |
 
 ---
 
-## 第一部分: 直接照搬 (领域无关内核)
+## Part 1: Keep As-Is (Domain-Agnostic Core)
 
-以下内容改都不用改, 拿去就能用:
+The following requires no changes — take it and use it directly:
 
-### 1.1 协作机制 (`.claude/` 五件套)
+### 1.1 Collaboration Mechanisms (the `.claude/` Five-Pack)
 
-| 机制 | 作用 | 跨工种怎么用 |
-|------|------|-------------|
-| `commands/*.md` | 固定流程的 prompt | 换内容不换结构, 八步法名字可留 |
-| `skills/*/SKILL.md` | 可复用工具包 | 换工具, 结构不变 |
-| `agents/*.md` | 专职子代理 | 换人设, 框架不变 |
-| `hooks/*` | 生命周期钩子 | 照搬 |
-| `rules/*.md` | 硬规矩 | 结构照搬, 内容重写 |
+| Mechanism | Purpose | Cross-Discipline Usage |
+|-----------|---------|------------------------|
+| `commands/*.md` | Prompts for fixed workflows | Replace content, keep structure; the Eight-Step names can stay |
+| `skills/*/SKILL.md` | Reusable toolkits | Replace tools, keep structure |
+| `agents/*.md` | Specialist sub-agents | Replace persona, keep framework |
+| `hooks/*` | Lifecycle hooks | Keep as-is |
+| `rules/*.md` | Hard rules | Keep structure, rewrite content |
 
-### 1.2 八步法骨架 (命令名可以照抄)
+### 1.2 Eight-Step Skeleton (command names can be reused verbatim)
 
 ```
 /prd → /plan → /code → /test → /review → /build → /deploy → /release
-   ↓       ↓        ↓       ↓        ↓         ↓        ↓         ↓
- 需求   拆解    实现   验证   评审   产物    交付    发布
+  ↓       ↓       ↓       ↓        ↓         ↓        ↓         ↓
+ Req   Break  Impl  Verify  Review  Artifact  Deliver  Release
 ```
 
-**每步的抽象含义是跨工种的**, 只是「产出物」变了 (见第三部分映射表)。
+**The abstract meaning of each step is cross-discipline** — only the "deliverable" changes (see the mapping table in Part 3).
 
-辅助命令同样通用: `/prd-check` `/plan-check` `/bug-check` `/fix` `/start` `/meta-audit`。
+Auxiliary commands are equally universal: `/prd-check` `/plan-check` `/bug-check` `/fix` `/start` `/meta-audit`.
 
-### 1.3 可追溯链
+### 1.3 Traceability Chain
 
 ```
-需求文档锚点  →  任务 ID  →  产出物里的引用 (@prd/@rules/@task)  →  验证用例
+Requirements anchor  →  Task ID  →  References in deliverables (@prd/@rules/@task)  →  Validation cases
 ```
 
-不管是代码、SQL、Terraform、Figma 文件、还是论文稿, 都能挂这条链。关键是**每个产出物都标注来源**。
+This chain works for code, SQL, Terraform, Figma files, or research papers. The key is **every deliverable is annotated with its source**.
 
-### 1.4 硬性闸门思路
+### 1.4 Hard Gate Pattern
 
-`/prd-check` 在进 `/plan` 前拦, `/plan-check` 在进 `/code` 前拦。
+`/prd-check` blocks before `/plan`; `/plan-check` blocks before `/code`.
 
-**通用原则**: 任何两个阶段之间, 都应该有一个 `check` 命令拦截「上游未完成的占位符」和「下游依赖的契约缺失」。具体检查项按工种改, 机制不变。
+**General principle**: Between any two phases there should be a `check` command to intercept "upstream unfilled placeholders" and "missing downstream contract dependencies." The specific checks change per discipline; the mechanism does not.
 
-### 1.5 设计原则 (所有工种共用)
+### 1.5 Design Principles (shared across all disciplines)
 
-1. **可追溯**: 任何产出都能反查到需求
-2. **关键节点人审**: 需求 / 拆解 / 评审 / 发布 这几步必须人拍板
-3. **失败显式可见**: 不降级、不跳过、不默默兜底
+1. **Traceability**: Every deliverable can be traced back to a requirement
+2. **Human review at critical nodes**: Requirements / breakdown / review / release must have human sign-off
+3. **Failures are explicitly visible**: No silent degradation, no skipping, no silent fallbacks
 
-### 1.6 文档基建
+### 1.6 Documentation Infrastructure
 
-| 文件 | 作用 | 跨工种用法 |
-|------|------|-----------|
-| `docs/DECISIONS.md` | ADR | 记架构/流程决策, 不限工种 |
-| `docs/retrospectives/` | meta-audit 报告 | 定期自检, 不限工种 |
-| 目录级 `README.md` | 文件清单 | 任何目录都该有 |
-| 产出物头部 JSDoc / 注释块 | `@prd` `@task` `@rules` 锚点 | 语法不同 (Python 用 docstring, SQL 用块注释, Figma 用组件 description), 语义相同 |
+| File | Purpose | Cross-Discipline Usage |
+|------|---------|------------------------|
+| `docs/DECISIONS.md` | ADR | Records architecture/process decisions; not discipline-specific |
+| `docs/retrospectives/` | meta-audit reports | Periodic self-checks; not discipline-specific |
+| Directory-level `README.md` | File manifests | Every directory should have one |
+| Deliverable header JSDoc / comment block | `@prd` `@task` `@rules` anchors | Syntax varies (Python uses docstrings, SQL uses block comments, Figma uses component descriptions), semantics are the same |
 
 ---
 
-## 第二部分: 保留结构、替换内容 (领域层)
+## Part 2: Keep Structure, Replace Content (Domain Layer)
 
-以下文件保留文件名和大纲, 按本工种重写内容:
+Keep the filenames and outlines of the following files; rewrite the content for your discipline:
 
 ### 2.1 `.claude/rules/tech-stack.md`
 
-**替换**: 框架 / 库 / 工具链
+**Replace**: Framework / libraries / toolchain
 
-| 工种 | 替换为 |
-|------|-------|
-| 前端 | UmiJS + React + antd (当前) |
-| 后端 | Spring Boot / Express / Gin / FastAPI / Rails |
-| 数据工程 | dbt / Airflow / Spark / Flink / Kafka |
-| 移动 (iOS) | Swift + SwiftUI + Combine |
-| 移动 (Android) | Kotlin + Jetpack Compose |
-| 跨端 | Flutter / React Native |
+| Discipline | Replace With |
+|------------|-------------|
+| Frontend | UmiJS + React + antd (current) |
+| Backend | Spring Boot / Express / Gin / FastAPI / Rails |
+| Data Engineering | dbt / Airflow / Spark / Flink / Kafka |
+| Mobile (iOS) | Swift + SwiftUI + Combine |
+| Mobile (Android) | Kotlin + Jetpack Compose |
+| Cross-platform | Flutter / React Native |
 | DevOps/SRE | Terraform + Ansible + Helm + ArgoCD |
 | QA | Playwright / Cypress / Selenium + Allure |
-| 设计 | Figma + Design Token 工具链 |
-| 产品 | Notion / 飞书 / Jira + 数据看板 |
-| 技术写作 | Markdown + MkDocs / Docusaurus + mermaid |
-| 科研 | Python + Jupyter + LaTeX + Git LFS |
+| Design | Figma + Design Token toolchain |
+| Product | Notion / Feishu / Jira + data dashboards |
+| Technical Writing | Markdown + MkDocs / Docusaurus + mermaid |
+| Research | Python + Jupyter + LaTeX + Git LFS |
 
 ### 2.2 `.claude/rules/no-hardcode.md`
 
-**替换**: 「什么算硬编码」的具体场景
+**Replace**: Specific scenarios defining "what counts as hardcoding"
 
-| 工种 | 不得写死的内容 |
-|------|--------------|
-| 前端 | 文案 / 颜色 / API 地址 / 枚举值 / 尺寸 / 魔法数 |
-| 后端 | 配置 / 密钥 / DB 连接串 / 限流阈值 / 超时 / 错误码 |
-| 数据 | schema 路径 / 表名前缀 / 分区字段 / 重跑阈值 |
-| 移动 | 文案 / 主题色 / API / 版本号 / feature flag |
-| DevOps | 资源规格 / 域名 / 账号 ID / region / AMI |
-| QA | 账号 / 环境 URL / 等待时间 / 断言阈值 |
-| 设计 | 颜色值 (用 token) / 字号 / 圆角 / 间距 |
-| 写作 | 链接 / 版本号 / 产品名 (用变量/宏) |
+| Discipline | What Must Not Be Hardcoded |
+|------------|---------------------------|
+| Frontend | Copy / colors / API URLs / enums / sizes / magic numbers |
+| Backend | Config / secrets / DB connection strings / rate limits / timeouts / error codes |
+| Data | Schema paths / table name prefixes / partition fields / retry thresholds |
+| Mobile | Copy / theme colors / APIs / version numbers / feature flags |
+| DevOps | Resource specs / domains / account IDs / regions / AMIs |
+| QA | Accounts / environment URLs / wait times / assertion thresholds |
+| Design | Color values (use tokens) / font sizes / border radii / spacing |
+| Writing | Links / version numbers / product names (use variables/macros) |
 
-**通用原则**: 任何「会变、会不同环境/不同租户、可能被多处引用」的值, 都不准硬编码。配置要分层 (全局 → 模块 → 实例), 不得大量重复。
+**General principle**: Any value that "may change, differs across environments/tenants, or may be referenced in multiple places" must not be hardcoded. Config must be layered (global → module → instance) with no large-scale duplication.
 
-### 2.3 `.claude/rules/coding-style.md` (或改名为 `authoring-style.md`)
+### 2.3 `.claude/rules/coding-style.md` (or rename to `authoring-style.md`)
 
-**替换**: 本工种的命名规范、文件组织、注释惯例
+**Replace**: Naming conventions, file organization, and comment conventions for your discipline
 
-- 写码工种 (前端/后端/移动/数据/DevOps) → 保留「编码规范」命名
-- 非码工种 → 改成对应的「产出规范」:
-  - 设计: design-style.md (命名层次 / 图层规范 / 组件复用)
-  - 产品: prd-style.md (结构化写作 / 用户故事格式)
-  - 写作: writing-style.md (语气 / 结构 / 引用)
-  - 科研: research-style.md (实验记录 / 数据管理 / 复现标准)
+- Code disciplines (frontend / backend / mobile / data / DevOps) → keep the "coding style" name
+- Non-code disciplines → rename to the appropriate "authoring style":
+  - Design: design-style.md (naming hierarchy / layer conventions / component reuse)
+  - Product: prd-style.md (structured writing / user story format)
+  - Writing: writing-style.md (tone / structure / citations)
+  - Research: research-style.md (experiment logging / data management / reproducibility standards)
 
-### 2.4 `.claude/rules/testing.md` (或改名为 `validation.md`)
+### 2.4 `.claude/rules/testing.md` (or rename to `validation.md`)
 
-**替换**: 本工种的验证方式
+**Replace**: Validation methods for your discipline
 
-| 工种 | 验证方式 |
-|------|---------|
-| 前端 | Vitest + Playwright |
-| 后端 | JUnit / pytest / go test + 集成测试 + 契约测试 |
-| 数据 | dbt test / great_expectations / 数据质量断言 |
-| 移动 | XCTest / Espresso / Flutter test + 真机回归 |
-| DevOps | terratest / conftest / policy-as-code + 演练 |
-| QA | 测试报告 + 用例覆盖矩阵 |
-| 设计 | 可用性测试 + a11y 审计 + 设计评审 checklist |
-| 产品 | 验收 case + 数据埋点验证 |
-| 写作 | 同行评审 + 链接/术语一致性检查 |
-| 科研 | 结果复现 + 统计显著性检验 |
+| Discipline | Validation Method |
+|------------|------------------|
+| Frontend | Vitest + Playwright |
+| Backend | JUnit / pytest / go test + integration tests + contract tests |
+| Data | dbt test / great_expectations / data quality assertions |
+| Mobile | XCTest / Espresso / Flutter test + device regression |
+| DevOps | terratest / conftest / policy-as-code + game days |
+| QA | Test reports + case coverage matrix |
+| Design | Usability testing + a11y audit + design review checklist |
+| Product | Acceptance cases + analytics event validation |
+| Writing | Peer review + link/terminology consistency check |
+| Research | Result reproduction + statistical significance testing |
 
-**通用原则**: 验证断言的**唯一来源是需求规则 (@rules)**, 不是 AI 读产出物的推测。这条不管什么工种都不变。
+**General principle**: The **sole source of validation assertions is the requirements rules (`@rules`)** — not AI inference from reading the deliverable. This holds regardless of discipline.
 
 ### 2.5 `.claude/rules/file-docs.md`
 
-**替换**: 注释/元数据的语法, 保留语义
+**Replace**: Syntax for attaching comments/metadata; preserve the semantics
 
-| 工种 | 怎么挂 `@prd` `@task` `@rules` |
-|------|------------------------------|
-| 前端/后端 | 文件头 JSDoc / docstring |
-| 数据 (SQL) | 文件头块注释 `/* @prd ... */` |
-| 数据 (dbt) | model 的 `description` YAML 字段 |
-| 移动 (Swift) | `/// @prd ...` |
-| DevOps (Terraform) | `# @prd ...` 块 + `description` 参数 |
-| 设计 (Figma) | 组件 description 字段 + page 层级描述 |
-| 产品 (PRD) | 本身就是 PRD, `@task` 挂在 user story 上 |
-| 写作 | frontmatter `prd: xxx, task: xxx` |
-| 科研 | 实验脚本 docstring + Jupyter 第一个 cell |
-
----
-
-## 第三部分: 八步法的工种映射表
-
-每步的抽象语义不变, 产出物按工种替换:
-
-| 步骤 | 抽象语义 | 前端 | 后端 | 数据 | 移动 | DevOps | QA | 设计 | 产品 | 科研 |
-|------|---------|------|------|------|------|--------|-----|------|------|------|
-| `/prd` | 固化需求 | PRD | API 需求书 | 指标定义 | 功能规格 | SLO/runbook 需求 | 质量目标 | 设计简报 | MRD/PRD | 研究问题+假设 |
-| `/plan` | 拆任务 | 组件/hook/api 清单 | controller/service/model 清单 | DAG + 表结构 | 页面/组件清单 | IaC 模块拆分 | 测试计划+用例矩阵 | 信息架构+组件清单 | 功能拆解+优先级 | 实验设计 |
-| `/code` | 实现 | TypeScript 代码 | Java/Go/Python 代码 | SQL / dbt / Airflow DAG | Swift/Kotlin/Dart | Terraform/Helm | 自动化脚本 | Figma 组件 | PRD 正文 | 实验脚本/分析 |
-| `/test` | 验证 | Vitest + Playwright | JUnit/pytest + 集成 | dbt test / GE | XCTest/Espresso | terratest/conftest | 执行+报告 | 可用性测试 | 验收 case | 结果复现 |
-| `/review` | 评审 | 代码审查 | 代码审查 | SQL/DAG 审查 | 代码审查 | IaC 审查 | 测试报告审查 | 设计评审 | PRD 评审 | 同行评议 |
-| `/build` | 产物化 | 静态资源 bundle | Docker image | 任务镜像/jar | .ipa / .apk | helm chart / plan output | 用例库 | 设计规范交付包 | 文档打包 | 论文稿 |
-| `/deploy` | 交付 | CDN/OSS | K8s/Serverless | 调度平台注册 | TestFlight/内测 | apply 到目标环境 | 测试环境部署 | token 发布 | 需求登记 | 投稿 |
-| `/release` | 发布 | 正式版+灰度 | 正式版+金丝雀 | 上线指标 | App Store/Play | 变更通告+回滚预案 | 质量签章 | DS 版本号 | 需求宣讲 | 发表+回复评审 |
+| Discipline | How to Attach `@prd` `@task` `@rules` |
+|------------|--------------------------------------|
+| Frontend / Backend | File-header JSDoc / docstring |
+| Data (SQL) | File-header block comment `/* @prd ... */` |
+| Data (dbt) | Model `description` YAML field |
+| Mobile (Swift) | `/// @prd ...` |
+| DevOps (Terraform) | `# @prd ...` block + `description` parameter |
+| Design (Figma) | Component description field + page-level description |
+| Product (PRD) | The PRD itself; `@task` attached to user stories |
+| Writing | Frontmatter `prd: xxx, task: xxx` |
+| Research | Experiment script docstring + first Jupyter cell |
 
 ---
 
-## 第四部分: 可选模块 (按工种取舍)
+## Part 3: Eight-Step Discipline Mapping Table
 
-以下模块某些工种用不上, 直接删:
+The abstract semantics of each step are unchanged; only the deliverables change per discipline:
 
-| 模块 | 用得上的工种 | 用不上的工种 |
-|------|------------|------------|
-| OpenAPI 类型生成 | 有契约对接的前端/后端/移动 | 设计/产品/写作/科研 |
-| 国际化规范 | 面向用户的产品 (前端/移动/文案) | 后端/DevOps/数据 (一般无此需求) |
-| Design Token | 前端/移动/设计 | 后端/数据/DevOps |
-| 无障碍审计 (`ext-a11y-check`) | 前端/移动/设计 | 其他 |
-| 性能审计 (`ext-perf-audit`) | 前端/移动/后端/数据 | 写作/产品/设计 |
-| 依赖审计 (`ext-dep-audit`) | 所有有依赖管理的工种 | — |
-
-**原则**: 不确定要不要留, 先留着; 确定不用, 整块删 (不要留空壳)。
+| Step | Abstract Meaning | Frontend | Backend | Data | Mobile | DevOps | QA | Design | Product | Research |
+|------|-----------------|----------|---------|------|--------|--------|-----|--------|---------|---------|
+| `/prd` | Solidify requirements | PRD | API requirements doc | Metric definitions | Feature spec | SLO/runbook requirements | Quality goals | Design brief | MRD/PRD | Research questions + hypotheses |
+| `/plan` | Break into tasks | Component/hook/api list | Controller/service/model list | DAG + table schema | Screen/component list | IaC module breakdown | Test plan + case matrix | Information architecture + component list | Feature breakdown + priorities | Experiment design |
+| `/code` | Implement | TypeScript code | Java/Go/Python code | SQL / dbt / Airflow DAG | Swift/Kotlin/Dart | Terraform/Helm | Automation scripts | Figma components | PRD body | Experiment scripts/analysis |
+| `/test` | Validate | Vitest + Playwright | JUnit/pytest + integration | dbt test / GE | XCTest/Espresso | terratest/conftest | Execute + report | Usability testing | Acceptance cases | Result reproduction |
+| `/review` | Review | Code review | Code review | SQL/DAG review | Code review | IaC review | Test report review | Design review | PRD review | Peer review |
+| `/build` | Produce artifact | Static bundle | Docker image | Task image/jar | .ipa / .apk | Helm chart / plan output | Test case library | Design spec delivery package | Documentation package | Paper draft |
+| `/deploy` | Deliver | CDN/OSS | K8s/Serverless | Scheduling platform registration | TestFlight/internal beta | Apply to target environment | Test environment deployment | Token release | Requirements registration | Submission |
+| `/release` | Publish | Stable release + canary | Stable release + canary | Live metrics | App Store/Play Store | Change announcement + rollback plan | Quality sign-off | DS version number | Requirements announcement | Publication + review response |
 
 ---
 
-## 第五部分: 迁移步骤 (从本仓库 fork 到新工种)
+## Part 4: Optional Modules (Pick and Choose by Discipline)
+
+The following modules are not needed by all disciplines — delete them outright if unused:
+
+| Module | Disciplines That Need It | Disciplines That Don't |
+|--------|--------------------------|------------------------|
+| OpenAPI type generation | Frontend/backend/mobile with contract integrations | Design/product/writing/research |
+| i18n conventions | User-facing products (frontend/mobile/copy) | Backend/DevOps/data (generally not needed) |
+| Design Token | Frontend/mobile/design | Backend/data/DevOps |
+| Accessibility audit (`ext-a11y-check`) | Frontend/mobile/design | Others |
+| Performance audit (`ext-perf-audit`) | Frontend/mobile/backend/data | Writing/product/design |
+| Dependency audit (`ext-dep-audit`) | All disciplines with dependency management | — |
+
+**Principle**: If unsure whether to keep something, leave it for now. If you're certain it's unused, delete the entire block (don't leave empty shells).
+
+---
+
+## Part 5: Migration Steps (Forking This Repo for a New Discipline)
 
 ```
-1. Fork 本仓库, 改名
-   └─ 新仓库命名建议: ai-<工种>-automation  (例: ai-backend-automation)
+1. Fork this repo and rename it
+   └─ Suggested naming: ai-<discipline>-automation  (e.g. ai-backend-automation)
 
-2. 保留不动
-   ├─ .claude/commands/*.md            (八步法骨架, 改内容不改文件)
-   ├─ .claude/agents/*.md              (bug-fixer / code-reviewer / meta-auditor / test-writer 等, 改人设不改机制)
-   ├─ .claude/hooks/*                  (生命周期钩子, 一般能直接用)
-   ├─ docs/WORKFLOW.md                 (改每步的产出物描述, 保留流程)
-   ├─ docs/DECISIONS.md                (清空内容, 保留格式)
-   └─ docs/retrospectives/             (清空)
+2. Keep unchanged
+   ├─ .claude/commands/*.md            (Eight-Step skeleton; change content, not files)
+   ├─ .claude/agents/*.md              (bug-fixer / code-reviewer / meta-auditor / test-writer etc.; change persona, not mechanism)
+   ├─ .claude/hooks/*                  (lifecycle hooks; generally usable as-is)
+   ├─ docs/WORKFLOW.md                 (update deliverable descriptions per step; keep the flow)
+   ├─ docs/DECISIONS.md                (clear content; keep format)
+   └─ docs/retrospectives/             (clear content)
 
-3. 重写 .claude/rules/*.md
-   ├─ tech-stack.md          ← 换技术栈
-   ├─ no-hardcode.md         ← 换「禁止硬编码」的具体场景
-   ├─ coding-style.md        ← 换为本工种的产出规范 (必要时改名)
-   ├─ file-docs.md           ← 换为本工种的元数据挂载方式
-   └─ testing.md             ← 换为本工种的验证方式 (必要时改名)
+3. Rewrite .claude/rules/*.md
+   ├─ tech-stack.md          ← swap in your tech stack
+   ├─ no-hardcode.md         ← swap in discipline-specific "no hardcoding" scenarios
+   ├─ coding-style.md        ← replace with your discipline's authoring conventions (rename if needed)
+   ├─ file-docs.md           ← replace with your discipline's metadata attachment method
+   └─ testing.md             ← replace with your discipline's validation method (rename if needed)
 
-4. 重写 workspace/
-   ├─ 前端 → workspace/ 是 UmiJS 项目
-   ├─ 后端 → workspace/ 是 Spring/Express/Gin 项目
-   ├─ 数据 → workspace/ 是 dbt/Airflow 项目
-   ├─ 设计 → workspace/ 是 Figma 文件 + design token 源码
-   └─ 写作/科研 → workspace/ 是 Markdown/LaTeX 文件集
+4. Rewrite workspace/
+   ├─ Frontend  → workspace/ is a UmiJS project
+   ├─ Backend   → workspace/ is a Spring/Express/Gin project
+   ├─ Data      → workspace/ is a dbt/Airflow project
+   ├─ Design    → workspace/ is Figma files + design token source
+   └─ Writing/Research → workspace/ is a Markdown/LaTeX file collection
 
-5. 改 CLAUDE.md (入职培训)
-   ├─ P0 规则可能要换 (例: 后端可能 P0 是「禁止直连数据库」而非「禁止硬编码文案」)
-   ├─ 目录结构说明 refresh
-   └─ 八步法示例改成本工种的场景
+5. Update CLAUDE.md (onboarding guide)
+   ├─ P0 rules may need to change (e.g. backend P0 might be "no direct DB access" instead of "no hardcoded copy")
+   ├─ Refresh the directory structure description
+   └─ Update Eight-Step examples to match your discipline's scenarios
 
-6. 改 docs/prds/_template.md
-   └─ 不同工种的「需求文档」模板差异大, 按工种重写:
-      后端:  API 定义 / 错误码 / 限流 / SLA
-      数据:  指标定义 / 数据源 / 血缘 / 刷新频率
-      移动:  端兼容性 / 版本分发 / 离线策略
-      设计:  用户目标 / 交互流程 / 设计原则
-      写作:  受众 / 立场 / 大纲 / 术语
+6. Update docs/prds/_template.md
+   └─ Requirements document templates vary significantly by discipline; rewrite per discipline:
+      Backend:  API definitions / error codes / rate limiting / SLA
+      Data:     Metric definitions / data sources / lineage / refresh frequency
+      Mobile:   Platform compatibility / distribution strategy / offline policy
+      Design:   User goals / interaction flows / design principles
+      Writing:  Audience / stance / outline / terminology
 
-7. 跑通一次端到端试跑
-   ├─ 挑一个最小需求
-   ├─ 走 /prd → /prd-check → /plan → /plan-check → /code → /test
-   └─ 卡壳的地方立即记入 docs/DECISIONS.md
+7. Do one end-to-end dry run
+   ├─ Pick a minimal requirement
+   ├─ Walk through /prd → /prd-check → /plan → /plan-check → /code → /test
+   └─ Record any blockers immediately in docs/DECISIONS.md
 
-8. 跑一次 /meta-audit, 看框架是否自洽
+8. Run /meta-audit once to verify framework coherence
 ```
 
 ---
 
-## 第六部分: 不要做什么
+## Part 6: What Not to Do
 
-- ❌ **过早抽「框架核 + 领域包」两层结构** — 没跑过 2-3 个工种之前, 不知道真正通用的边界在哪, 硬抽大概率抽错
-- ❌ **把前端的规则硬搬给后端** — 看着文件还在, 但内容不对, AI 会按错的规则生成产出物
-- ❌ **保留用不上的模块** (例: 给后端留 Design Token 规则) — 留空壳比没有更误导
-- ❌ **换了 workspace 不换 CLAUDE.md** — CLAUDE.md 是入职培训, 旧培训会污染所有命令
-- ❌ **一次改完所有工种** — 先跑通一个, 磨 2-3 个月, 再 fork 下一个
-
----
-
-## 第七部分: 判断一个工种适不适合用本框架
-
-**适合**:
-- 有明确的**需求 → 拆解 → 实现 → 验证 → 交付**流程
-- 产出物可以被文本化、可以挂元数据、可以挂锚点
-- 有「契约」概念 (API / schema / token / 术语表 / 评审标准)
-- 团队协作, 需要追溯
-
-**不适合** (或性价比低):
-- 纯创意工种, 流程高度非线性 (画家 / 作曲)
-- 产出物无法文本化、无法版本化
-- 单人项目, 没有协作追溯需求
-- 需求极度快速变化, 文档化收益 < 成本
+- ❌ **Extracting a "framework core + domain package" two-layer structure prematurely** — without running 2–3 disciplines first, you don't know where the truly universal boundary is; premature extraction almost always gets it wrong
+- ❌ **Copying frontend rules directly to backend** — the files are still there but the content is wrong; AI will generate deliverables based on incorrect rules
+- ❌ **Keeping unused modules** (e.g. leaving Design Token rules for a backend project) — empty shells are more misleading than nothing
+- ❌ **Changing workspace without updating CLAUDE.md** — CLAUDE.md is the onboarding guide; stale onboarding pollutes all commands
+- ❌ **Migrating all disciplines at once** — get one working first, refine it over 2–3 months, then fork for the next
 
 ---
 
-## 相关文档
+## Part 7: Is Your Discipline a Good Fit for This Framework?
 
-- [README.md](../README.md) — 框架总览
-- [WORKFLOW.md](WORKFLOW.md) — 八步法操作手册
-- [DECISIONS.md](DECISIONS.md) — 架构决策记录 (迁移时在这里记)
-- [.claude/README.md](../.claude/README.md) — 五件套说明
+**Good fit**:
+- Has a clear **requirements → breakdown → implementation → validation → delivery** flow
+- Deliverables can be textualized, annotated with metadata, and anchored
+- Has a "contract" concept (API / schema / token / glossary / review criteria)
+- Team collaboration with traceability needs
+
+**Poor fit** (or low ROI):
+- Purely creative disciplines with highly non-linear processes (painting / composing)
+- Deliverables that cannot be textualized or versioned
+- Solo projects with no collaboration or traceability needs
+- Requirements change so rapidly that documentation cost exceeds benefit
+
+---
+
+## Related Documents
+
+- [README.md](../README.md) — Framework overview
+- [WORKFLOW.md](WORKFLOW.md) — Eight-Step operations manual
+- [DECISIONS.md](DECISIONS.md) — Architecture decision records (log migration decisions here)
+- [.claude/README.md](../.claude/README.md) — Five-pack explained

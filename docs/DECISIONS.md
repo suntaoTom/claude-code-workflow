@@ -1,219 +1,219 @@
-# 架构决策记录 (ADR)
+# Architecture Decision Records (ADR)
 
-> 记录框架重大设计决策 + 理由 + 替代方案。未来的 AI / 新人读这里就知道「为什么这么做」, 避免重走弯路或误改。
+> Records major framework design decisions, rationale, and alternatives considered. Future AI models and new team members can read this to understand "why things are the way they are," avoiding repeated mistakes or uninformed reversals.
 
-## 什么时候该加一条
+## When to Add an Entry
 
-| 应该记录 ✅ | 不用记录 ❌ |
-|-----------|------------|
-| 引入新机制 (命令 / skill / agent / hook / 规则分类) | 改 bug / 改措辞 / 文件重命名 |
-| 变更既有机制形态 (如 `.md` → skill 包) | 日常代码改动 (commit message 即可) |
-| 约束性设计选择 (只读 / 单向依赖 / 硬闸门) | 还没验证的想法 (先开 issue) |
-| 反复过的决策 (必须写明为什么反复) | |
+| Should Record ✅ | No Need to Record ❌ |
+|-----------------|----------------------|
+| Introducing a new mechanism (command / skill / agent / hook / rule category) | Bug fixes / wording changes / file renames |
+| Changing the form of an existing mechanism (e.g. `.md` → skill package) | Routine code changes (commit message is sufficient) |
+| Constraining design choices (read-only / one-way dependency / hard gates) | Unvalidated ideas (open an issue first) |
+| Decisions that were revisited (must document why it was revisited) | |
 
-## 模板
+## Template
 
 ```markdown
-## YYYY-MM-DD: 一句话标题
+## YYYY-MM-DD: One-line title
 
-**背景**: 触发这次决策的问题
-**决策**: 做了什么, 具体到文件
-**理由**: 为什么选这条
-**替代方案**: 考虑过但没选的 + 放弃原因
-**影响**: 关联文件/目录
+**Background**: The problem that triggered this decision
+**Decision**: What was done, down to the specific files
+**Rationale**: Why this option was chosen
+**Alternatives**: Options considered but rejected + reasons for rejection
+**Impact**: Related files/directories
 ```
 
-## 规则
+## Rules
 
-- 按时间倒序, 最新的在上面
-- 一旦写入, 不要改旧条目内容 (决策是历史事实, 改动要另起新条目标注「推翻 YYYY-MM-DD 的 XXX 决策」)
-- 每条控制在 15 行以内, 细节放链接里
-
----
-
-## 2026-04-20: 在线文档 (飞书/Notion/语雀 等) 不做 API 集成, 走「导出 + prd-import」路径
-
-**背景**: `prd-import` 支持本地 `.docx/.xlsx/.pptx` 后, 下一个问题是在线文档。团队常用飞书 / Notion / 语雀 / 腾讯文档 / Google Docs 写需求, 产品给过来的往往是在线链接而非文件。"能不能让 `/prd` 直接读在线链接?"是自然诉求。
-
-**决策**: **不自己做任何平台的 API 集成**。官方路径:
-1. **路径 A (推荐, 立即可用)**: 用户在平台里导出为 `.md` (Notion / 语雀) 或 `.docx` (飞书 / 腾讯 / Google / Confluence / 钉钉 / 石墨), 然后按现有 `prd-import` 流程处理
-2. **路径 B (进阶, 用户自配)**: 推荐 MCP server (Notion / Google Drive 有较成熟的), 项目**不内置配置**, 用户自己写到 `~/.claude/mcp.json`
-
-各平台导出路径的详细指引写入 [.claude/skills/prd-import/references/formats.md](../.claude/skills/prd-import/references/formats.md#在线文档怎么办)。
-
-**理由**:
-- **维护成本不可承受** — 飞书 / Notion / 语雀 / Google 认证机制完全不同 (tenant_access_token / integration token / user token / OAuth), token 刷新 / 权限 scope / rate limit / SDK 版本管理全都是活, 做全意味着把框架从「工具」升级成「运维项目」
-- **ROI 太低** — 90% 的团队只用 1-2 个平台, 做全是浪费; 只做一家又会被其他团队问「为什么不支持 X」
-- **路径 A 已经够好** — 所有平台都有导出功能, 3 分钟操作成本, 覆盖 100% 平台, 一次学会永远适用
-- **脆弱性** — 平台前端改版 / API 弃用 / token 策略调整, 任何一个都会让集成挂掉, 维护债持续累积
-- **安全性** — 集成要存 token, token 泄露影响整个账号; 不集成则无此风险
-- **MCP 正好解决这个诉求** — 社区和 Anthropic 官方的 MCP server 是「用户侧」决策, 不是「项目侧」决策, 项目只需推荐不需维护
-
-**替代方案 (放弃)**:
-- **自己写飞书集成** — 即使只做飞书 (国内团队高频), 仍要管 tenant_access_token 刷新 + 文档 token 权限 + 富文本 block 到 markdown 的转换层, 预计 500+ 行代码 + 长期维护, 且只解决一家问题
-- **URL 抓取 (公开链接)** — 只对公开分享的文档生效, 大多团队内部文档不公开; HTML 解析脆弱; 维护成本/收益比极差
-- **做一个统一的「在线文档适配器」抽象** — 看似优雅, 实际每个平台的数据模型差异大, 抽象出来的接口要么约束太紧 (特定平台特性丢失) 要么太松 (约等于没抽象), 是典型的过早抽象陷阱
-
-**影响**:
-- `.claude/skills/prd-import/SKILL.md` — 输入类型表加一行「在线文档」, 指向参考文档
-- `.claude/skills/prd-import/references/formats.md` — 加「在线文档怎么办」章节 (含 9 个主流平台的导出路径表 + MCP 指引 + 拒绝 API 集成的理由)
-- `docs/WORKFLOW.md` — Step 1 输入类型表 + 速查表各加一行
-
-**落款**: 如果未来团队高度集中用某一个平台且手动导出成本确实高, **才**考虑做那一家的轻量集成 (只做只读, 不做写入), 但仍要评估是否用 MCP 替代。不要"为了完整性"做一堆集成。
+- Ordered reverse-chronologically; newest entry at the top
+- Once written, do not edit old entries (decisions are historical facts; changes require a new entry noting "supersedes the XXX decision from YYYY-MM-DD")
+- Keep each entry under 15 lines; link to details elsewhere
 
 ---
 
-## 2026-04-20: 非 md 需求格式入口抽为 prd-import skill
+## 2026-04-20: Online documents (Feishu/Notion/Yuque etc.) will not have API integrations — use the "export + prd-import" path instead
 
-**背景**: `/prd` 命令只接受文字 / markdown / PDF / 图片 (Claude Code 原生支持), 但实际产品/后端常塞 `.docx / .xlsx / .pptx`, 这些是二进制 zip+XML, Claude 读不了。用户要么手动粘贴 (长文档粘不完)、要么自己另存为 PDF (格式丢失)。整个 `/prd` 主流程的入口被卡死。
+**Background**: After `prd-import` gained support for local `.docx/.xlsx/.pptx`, the next question was online documents. Teams commonly write requirements in Feishu / Notion / Yuque / Tencent Docs / Google Docs, and what product managers hand over is often an online link rather than a file. "Can `/prd` read online links directly?" was a natural ask.
 
-**决策**: 新增 `.claude/skills/prd-import/` skill 包 + `workspace/scripts/prd-import.mjs` 脚本, 负责 Word/Excel/PPT → markdown 转换。产物落盘到 `docs/prds/_imports/<basename>-<日期>.md`, 然后跑 `/prd @<产物>` 走正常澄清流程。`/prd` 本身不动。
+**Decision**: **No API integrations will be built for any platform.** The official paths are:
+1. **Path A (recommended, available immediately)**: Users export from the platform as `.md` (Notion / Yuque) or `.docx` (Feishu / Tencent / Google / Confluence / DingTalk / Shimo), then process with the existing `prd-import` flow.
+2. **Path B (advanced, user-configured)**: Recommended MCP servers (Notion / Google Drive have mature ones); the project **does not bundle any config** — users add them to `~/.claude/mcp.json` themselves.
 
-**理由**:
-- **分层清晰** — 格式转换是确定性脚本任务 (有数据输入, 有标准输出), 放 skills/ 合适; `/prd` 是纯思考, 留 commands/
-- **产物可追溯** — 转换结果保留在 `_imports/`, 评审 PRD 时能对照原文, 不是一次性黑盒
-- **依赖最小** — 用 `mammoth` (docx) + `xlsx` (excel) 两个 npm 包, 装在 workspace/ 里复用现有 node_modules; PPTX 用 Node 原生 unzip + 正则, 不加依赖
-- **不破坏既有接口** — `/prd` 的调用方式不变, 只是多了一种预处理路径; 用户输入 md/文字/PDF/图片时零成本
+Detailed export instructions for each platform are written into [.claude/skills/prd-import/references/formats.md](../.claude/skills/prd-import/references/formats.md#在线文档怎么办).
 
-**替代方案 (放弃)**:
-- **扩展 `/prd` 自动识别并转换** — 把脚本调用塞进 `/prd` 的 prompt, 体验最顺但违反 skill/command 边界 (commands 是纯 prompt, 不该依赖外部脚本)
-- **依赖系统 pandoc** — 不是所有用户环境都装, 硬依赖增加首次使用摩擦; npm 包装在 workspace 里随 `pnpm install` 自动搞定
-- **让用户手动粘贴或另存 PDF** — 可行但用户体验差, 复杂表格和长文档会丢内容
+**Rationale**:
+- **Maintenance cost is unsustainable** — Feishu / Notion / Yuque / Google all use completely different auth mechanisms (tenant_access_token / integration token / user token / OAuth); token refresh, permission scopes, rate limits, and SDK versioning are all moving targets. Supporting all of them would turn the framework from a "tool" into an "operations project."
+- **ROI is too low** — 90% of teams use only 1–2 platforms; building all is wasteful. Supporting just one platform invites complaints about "why not X."
+- **Path A is already good enough** — Every platform has an export feature; the manual cost is ~3 minutes, covers 100% of platforms, and once learned applies forever.
+- **Fragility** — Platform UI changes, API deprecations, and token policy shifts can all break an integration silently; maintenance debt accumulates continuously.
+- **Security** — Integrations require storing tokens; token leaks expose the entire account. No integration means no such risk.
+- **MCP already solves this** — Community and official Anthropic MCP servers are a "user-side" decision, not a "project-side" decision; the project only needs to recommend, not maintain.
 
-**命名选择**: 不加 `ext-` 前缀。`ext-*` 语义是"可选扩展" (性能审计 / a11y 等, 不跑也能开发); `prd-import` 是**主流程入口的必要补充** (没它, doc 类需求进不来 `/prd`), 所以归为"无前缀 = 主流程配套技能"。
+**Alternatives (rejected)**:
+- **Build our own Feishu integration** — Even for Feishu alone (high-frequency for domestic teams), it requires managing tenant_access_token refresh + doc token permissions + a rich-text-block-to-markdown conversion layer; estimated 500+ lines of code + long-term maintenance, and only solves one platform.
+- **URL scraping (public links)** — Only works for publicly shared documents; most team-internal docs are private. HTML parsing is fragile; cost/benefit ratio is terrible.
+- **Build a unified "online document adapter" abstraction** — Looks elegant, but data models differ significantly across platforms; the resulting interface is either too tight (losing platform-specific features) or too loose (effectively no abstraction). A classic premature-abstraction trap.
 
-**影响**:
-- 新增: `.claude/skills/prd-import/{SKILL.md, references/formats.md}`, `workspace/scripts/prd-import.mjs`, `docs/prds/_imports/{.gitkeep, README.md}`
-- 修改: `workspace/package.json` (+mammoth, +xlsx, +prd:import 脚本), 根 `package.json` (+prd:import 代理), `.claude/skills/README.md` (登记 + 加命名约定表), `docs/WORKFLOW.md` (Step 1 加非 md 分支, 速查表加一行)
+**Impact**:
+- `.claude/skills/prd-import/SKILL.md` — Add an "online documents" row to the input type table, pointing to the reference doc
+- `.claude/skills/prd-import/references/formats.md` — Add an "What to do with online documents" section (including an export-path table for 9 major platforms + MCP guide + rationale for rejecting API integrations)
+- `docs/WORKFLOW.md` — Add one row each to the Step 1 input type table and the quick-reference table
 
----
-
-## 2026-04-20: 测试文件位置统一到 workspace/tests/ (推翻「与源文件同目录」)
-
-**背景**: `.claude/rules/testing.md` 和 `.claude/agents/test-writer.md` 原定「与源文件同目录」, 但 `.claude/commands/test.md` 和现存代码 (`workspace/tests/features/list/`) 已经走 `workspace/tests/` 镜像 `src/` 结构。2026-04-20 meta-audit 报告 (Top 3 必修) 捕到这个冲突 — 规则跟代码分叉会导致 test-writer 生成新测试时再形成第二套布局。
-
-**决策**: 统一到 `workspace/tests/` 镜像 `workspace/src/` 目录结构。所有单元/组件测试路径 `workspace/tests/<src 镜像路径>/<name>.test.ts(x)`; E2E 仍在 `workspace/tests/e2e/`。同步更新:
-- `.claude/rules/testing.md` (位置章节)
-- `.claude/agents/test-writer.md` (Step 3 位置选择表)
-- `.claude/agents/meta-auditor.md` (追溯链维度检查路径)
-- `.claude/agents/bug-fixer.md` (测试补齐路径)
-- `CLAUDE.md` (测试规范概要「位置」)
-- `.claude/commands/test.md` **保持不变** (它从一开始就是对的)
-
-**理由**:
-- **与现状一致** — 已有 `workspace/tests/features/list/` 是这个布局, 规则跟代码而不是让代码迁就规则
-- **src/ 目录干净** — `src/` 只放生产代码, 打包 / tsc / 覆盖率扫描 / 路径过滤都更简单
-- **测试导入走 `@/` 别名** — 避免相对路径爬 `../../../`, 源文件改名测试不跟着动
-- **CI 命令统一** — 一条 `pnpm test workspace/tests/` 跑全量, 不用拼 src 下的散装路径
-
-**替代方案 (放弃)**:
-- **与源文件同目录 (旧规则)** — 好处是「改源码立刻看到测试」, 但 src/ 混产物 + 导入路径一坨相对路径 + tsc/lint/build 要额外过滤规则
-- **`__tests__/` 子目录 (Jest 风格)** — 半吊子, 两种问题都占
-
-**推翻**: 本条推翻 2026-04-20 引入的「co-located tests」隐含规则 (此前未单独立项, 但散落在 `testing.md` / `test-writer.md` / `CLAUDE.md` 三处)。
-
-**影响**: 上方列出的 5 个 `.claude/` 文件 + `CLAUDE.md`; 现有 `workspace/tests/features/list/` 位置**不迁**, 它本来就对。
+**Note**: If a team is heavily concentrated on a single platform and manual export is genuinely costly, **only then** consider a lightweight read-only integration for that one platform — but still evaluate whether an MCP server is a better alternative. Do not build integrations "for completeness."
 
 ---
 
-## 2026-04-20: 引入元审计机制 (meta-auditor + /meta-audit)
+## 2026-04-20: Non-Markdown requirements format entry extracted into the prd-import skill
 
-**背景**: 框架越长越大, 命令/技能/代理/规则互相引用, 担心规则漂移、死引用、内部不一致。人眼巡检不现实。
+**Background**: The `/prd` command only accepts text / Markdown / PDF / images (natively supported by Claude Code), but product managers and backend teams regularly hand over `.docx / .xlsx / .pptx` files — binary zip+XML that Claude cannot read directly. Users either paste manually (impractical for long documents) or save as PDF (losing formatting). The entire `/prd` main-flow entry was blocked.
 
-**决策**: 新增只读子代理 `meta-auditor`, 扫 6 维度 (规则违规 / 文档漂移 / 内部一致性 / 追溯链 / 死引用 / 孤儿资产), 通过 `/meta-audit` 手动触发, 报告写到 `docs/retrospectives/YYYY-MM-DD-meta-audit.md`。
+**Decision**: Add a `.claude/skills/prd-import/` skill package + `workspace/scripts/prd-import.mjs` script to handle Word/Excel/PPT → Markdown conversion. The output is written to `docs/prds/_imports/<basename>-<date>.md`, then `/prd @<output>` runs the normal clarification flow. `/prd` itself is unchanged.
 
-**理由**:
-- 只读观察者, 不自动修复 — 避免「自我修改循环」「无限优化」反模式
-- 硬约束在工具层不靠 prompt — agent 的 `tools: [Read, Grep, Glob, Write]`, Write 只能写报告路径
-- 手动触发不定时跑 — 报告没人看就是噪音
-- 报告不可变 — 下次扫描生成新报告, 自然对比趋势
+**Rationale**:
+- **Clean separation of concerns** — Format conversion is a deterministic scripting task (defined input, standard output); it belongs in `skills/`. `/prd` is pure reasoning; it stays in `commands/`.
+- **Traceable artifacts** — Converted output is preserved in `_imports/`; when reviewing the PRD, the source can be compared side by side — no opaque black box.
+- **Minimal dependencies** — Uses `mammoth` (docx) + `xlsx` (excel), two npm packages installed inside `workspace/` reusing existing node_modules. PPTX uses native Node unzip + regex; no additional dependencies.
+- **No breaking changes** — The `/prd` interface is unchanged; this is just a new pre-processing path. Users providing Markdown / plain text / PDF / images pay zero extra cost.
 
-**替代方案**: Agent 自动修复 (反模式风险高) / 集成进 `/review` (职责混淆) — 均放弃。
+**Alternatives (rejected)**:
+- **Extend `/prd` to auto-detect and convert** — Embedding the script call in the `/prd` prompt gives the smoothest UX, but violates the skill/command boundary (commands are pure prompts and should not depend on external scripts).
+- **Rely on system-installed pandoc** — Not universally available; a hard dependency adds friction for first-time users. npm packages installed in workspace are set up automatically by `pnpm install`.
+- **Ask users to paste manually or save as PDF** — Workable but poor UX; complex tables and long documents lose content.
 
-**影响**: `.claude/agents/meta-auditor.md`, `.claude/commands/meta-audit.md`, `docs/retrospectives/`
+**Naming choice**: No `ext-` prefix. The `ext-*` semantic is "optional extension" (performance audit / a11y, etc. — development works fine without them). `prd-import` is a **necessary complement to the main-flow entry point** (without it, doc-format requirements can't enter `/prd`), so it is classified as "no prefix = main-flow companion skill."
 
----
-
-## 2026-04-20: ext-* 从斜杠命令升级为 Skill 包
-
-**背景**: 4 个扩展工具 (`ext-dep-audit` / `ext-perf-audit` / `ext-a11y-check` / `ext-changelog`) 原为 `.md` 命令, 但这些任务有确定性步骤 (`pnpm audit` / `git log` / bundle size), 纯 prompt 让 AI 推断结果不可靠。
-
-**决策**: 迁到 `.claude/skills/ext-*/` 包格式: `SKILL.md` + `scripts/*.sh` + `references/*.md`。删除原 `.claude/commands/ext-*.md`。
-
-**理由**:
-- 脚本产出数据 → AI 做解读, 结果可复现
-- 渐进式加载 — SKILL.md 的 frontmatter 小, body 按需加载
-- description 自动触发, 用户不必记命令名
-
-**替代方案**: 主流程命令 (`/prd` `/plan` `/code` `/test`) 也迁 skill 包 — 不迁, 它们是纯思考类工作流, 没脚本可抽, 留在 `commands/` 更合适。
-
-**影响**: `.claude/skills/ext-*/`, `.claude/skills/README.md`
+**Impact**:
+- New: `.claude/skills/prd-import/{SKILL.md, references/formats.md}`, `workspace/scripts/prd-import.mjs`, `docs/prds/_imports/{.gitkeep, README.md}`
+- Modified: `workspace/package.json` (+mammoth, +xlsx, +prd:import script), root `package.json` (+prd:import proxy), `.claude/skills/README.md` (register + add naming convention table), `docs/WORKFLOW.md` (Step 1 adds non-Markdown branch; quick-reference table adds one row)
 
 ---
 
-## 2026-04-20: PRD 完备性检查抽为独立命令 (/prd-check)
+## 2026-04-20: Test file location unified under workspace/tests/ (supersedes "co-located with source files")
 
-**背景**: `/plan` 原把 PRD 完备性检查 (5 项硬闸门) 内嵌为第零步。用户改 PRD 过程中想自检只能跑整个 `/plan`, 反馈慢。
+**Background**: `.claude/rules/testing.md` and `.claude/agents/test-writer.md` originally specified "co-located with source files," but `.claude/commands/test.md` and existing code (`workspace/tests/features/list/`) already used the `workspace/tests/` mirroring `src/` structure. The 2026-04-20 meta-audit report (Top 3 Must-Fix) caught this conflict — rules diverging from code would cause `test-writer` to create a second inconsistent layout when generating new tests.
 
-**决策**: 抽 `.claude/commands/prd-check.md` 为独立命令, `/plan` 第零步改为**调用** `/prd-check`。两处共用同一套规则。
+**Decision**: Standardize on `workspace/tests/` mirroring `workspace/src/`. All unit/component test paths follow `workspace/tests/<src-mirror-path>/<name>.test.ts(x)`; E2E tests remain in `workspace/tests/e2e/`. Synchronized updates to:
+- `.claude/rules/testing.md` (location section)
+- `.claude/agents/test-writer.md` (Step 3 location-selection table)
+- `.claude/agents/meta-auditor.md` (traceability chain dimension check paths)
+- `.claude/agents/bug-fixer.md` (test backfill paths)
+- `CLAUDE.md` (testing spec summary "location")
+- `.claude/commands/test.md` **left unchanged** (it was correct from the start)
 
-**理由**:
-- 实时反馈 — 改 PRD 随时自检
-- 单一事实源 — 检查逻辑一处, 避免分叉
-- 入口拦截比下游 (task / 代码 / 测试) 成本低
+**Rationale**:
+- **Consistent with current state** — `workspace/tests/features/list/` already follows this layout; rules follow code, not the other way around.
+- **Clean `src/` directory** — `src/` contains only production code; bundling / tsc / coverage scanning / path filtering are all simpler.
+- **Test imports use the `@/` alias** — Avoids `../../../` relative paths; renaming source files doesn't force test file changes.
+- **Unified CI command** — A single `pnpm test workspace/tests/` runs everything; no need to concatenate scattered paths under `src/`.
 
-**影响**: `.claude/commands/prd-check.md`, `.claude/commands/plan.md`
+**Alternatives (rejected)**:
+- **Co-located with source files (old rule)** — Advantage: tests are immediately visible when editing source. Disadvantage: `src/` mixes production artifacts and tests; import paths become a tangle of relative paths; tsc/lint/build need extra filtering rules.
+- **`__tests__/` subdirectory (Jest-style)** — Halfway: suffers from both problems.
 
----
+**Supersedes**: This entry supersedes the "co-located tests" implicit rule introduced on 2026-04-20 (it was never formally recorded, but was scattered across `testing.md` / `test-writer.md` / `CLAUDE.md`).
 
-## 2026-04-20: @rules 定为测试断言唯一来源
-
-**背景**: 原本源文件 JSDoc 只有 `@prd`, 测试时 AI 读源码推测预期, 源码有 bug 时测试跟着错。
-
-**决策**: 源文件 JSDoc 强制写 `@rules` (业务规则原文, 不得 AI 改述), `/test` 以 `@rules` 为断言**唯一来源**, 每条规则一个 `it()`。
-
-**理由**:
-- 需求 → 代码 → 测试对齐变成单一事实源, 不给 AI 推测的口子
-- 业务规则改了, 源码 `@rules` 跟着改, 测试自动失效 → 强制对齐
-- `@prd` 指原文, `@rules` 写在代码里, 双重锚定防断链
-
-**替代方案**: `/test` 直接读 PRD — 放弃, 跨文件转换增加不确定性。
-
-**影响**: `.claude/rules/file-docs.md`, `.claude/rules/testing.md`, `.claude/commands/code.md`, `.claude/commands/test.md`
+**Impact**: The 5 `.claude/` files listed above + `CLAUDE.md`. The existing `workspace/tests/features/list/` location is **not migrated** — it was already correct.
 
 ---
 
-## 2026-04-20: 4 个子代理分工 (test-writer / code-reviewer / bug-fixer / meta-auditor)
+## 2026-04-20: Introduced the meta-audit mechanism (meta-auditor + /meta-audit)
 
-**背景**: 大目录 review / 并行修多 bug / 重型只读扫描放主 context 会爆, 或没法并行加速。
+**Background**: As the framework grew, commands/skills/agents/rules increasingly cross-reference each other. Concerns arose about rule drift, dead references, and internal inconsistencies. Manual inspection is not feasible.
 
-**决策**: 建 `.claude/agents/` + 4 个子代理, 由主命令 `Agent` 工具 spawn, 各自跑独立 context。
+**Decision**: Add a read-only sub-agent `meta-auditor` that scans 6 dimensions (rule violations / documentation drift / internal consistency / traceability chains / dead links / orphaned assets), triggered manually via `/meta-audit`, with reports written to `docs/retrospectives/YYYY-MM-DD-meta-audit.md`.
 
-| 代理 | 工具权限 | 谁 spawn | 为什么 |
-|------|---------|---------|-------|
-| test-writer | R / W / E / Bash | `/code` 后 / `/test` | 测试可并行 |
-| code-reviewer | R 只读 | `/review` | 独立视角 + 只读防误改 |
-| bug-fixer | R / W / E / Bash | `/fix` | 多 bug 并行加速 |
-| meta-auditor | R + W(仅报告) | `/meta-audit` | 重型扫描 + 只读硬约束 |
+**Rationale**:
+- Read-only observer that does not auto-fix — avoids the "self-modification loop" and "infinite optimization" anti-patterns.
+- Hard constraints enforced at the tool layer, not by prompt — the agent's `tools: [Read, Grep, Glob, Write]`; Write is limited to the report path only.
+- Manually triggered, not scheduled — reports nobody reads are just noise.
+- Reports are immutable — the next scan generates a new report; trends emerge naturally from comparison.
 
-**理由**: 工具权限最小化 — 只读代理拿不到 Edit, 技术层面防误改; 独立 context 输出更聚焦不被主会话污染。
+**Alternatives**: Auto-fixing agent (high anti-pattern risk) / integrated into `/review` (mixes responsibilities) — both rejected.
 
-**影响**: `.claude/agents/*.md`, `.claude/agents/README.md`
+**Impact**: `.claude/agents/meta-auditor.md`, `.claude/commands/meta-audit.md`, `docs/retrospectives/`
 
 ---
 
-## 2026-04-20: .claude/ 机制明确分 5 类 (commands / skills / agents / hooks / rules)
+## 2026-04-20: ext-* tools upgraded from slash commands to Skill packages
 
-**背景**: 各种 `.md` 文件职责模糊, 新人不知该往哪塞, 也搞不清触发方式。
+**Background**: The 4 extension tools (`ext-dep-audit` / `ext-perf-audit` / `ext-a11y-check` / `ext-changelog`) were originally `.md` commands, but these tasks involve deterministic steps (`pnpm audit` / `git log` / bundle size). Relying on pure prompts to have AI infer results is unreliable.
 
-**决策**: 5 类机制 + 5 个目录 + `.claude/README.md` 入口导航。触发方式、并行性、上下文隔离各不同, 不能乱塞。
+**Decision**: Migrated to `.claude/skills/ext-*/` package format: `SKILL.md` + `scripts/*.sh` + `references/*.md`. Removed the original `.claude/commands/ext-*.md` files.
 
-| 机制 | 适合 | 触发方式 |
-|-----|------|---------|
-| 命令 (commands/) | 主工作流 (纯思考) | 用户 `/<name>` |
-| 技能包 (skills/) | 需跑脚本拿数据 | 显式或 AI 自动 |
-| 代理 (agents/) | 并行 / 保护主 context | 主命令 Agent spawn |
-| 钩子 (hooks/) | 静默自动检查 | settings.json 事件 |
-| 规则 (rules/) | 编码约束 | CLAUDE.md 引用 |
+**Rationale**:
+- Scripts produce data → AI interprets; results are reproducible.
+- Progressive loading — `SKILL.md` frontmatter is small; body loaded on demand.
+- `description` enables automatic triggering; users don't need to remember command names.
 
-**影响**: `.claude/README.md`, 各子目录 `README.md`
+**Alternatives**: Migrate main-flow commands (`/prd` `/plan` `/code` `/test`) to skill packages as well — rejected. Those are pure reasoning workflows with no scripts to extract; they are better suited to `commands/`.
+
+**Impact**: `.claude/skills/ext-*/`, `.claude/skills/README.md`
+
+---
+
+## 2026-04-20: PRD completeness check extracted as a standalone command (/prd-check)
+
+**Background**: `/plan` originally embedded the PRD completeness check (5 hard gates) as step zero. Users iterating on a PRD who wanted to self-check had to run the entire `/plan`, resulting in slow feedback.
+
+**Decision**: Extract `.claude/commands/prd-check.md` as a standalone command; `/plan` step zero is updated to **call** `/prd-check`. Both share the same rule set from a single source of truth.
+
+**Rationale**:
+- Real-time feedback — self-check any time while editing a PRD.
+- Single source of truth — check logic lives in one place; no risk of divergence.
+- Catching issues at the entry point is cheaper than catching them downstream (tasks / code / tests).
+
+**Impact**: `.claude/commands/prd-check.md`, `.claude/commands/plan.md`
+
+---
+
+## 2026-04-20: @rules designated as the sole source of test assertions
+
+**Background**: Source file JSDoc originally only had `@prd`; during testing, AI inferred expectations by reading the source code. When the source had a bug, the tests were wrong too.
+
+**Decision**: Source file JSDoc must include `@rules` (verbatim business rules; AI paraphrasing is not permitted). `/test` treats `@rules` as the **sole source** for assertions — one `it()` per rule.
+
+**Rationale**:
+- Requirements → code → tests are aligned to a single source of truth; AI inference is not given a foothold.
+- When a business rule changes, `@rules` in the source is updated; tests automatically break → forced alignment.
+- `@prd` points to the original document; `@rules` lives in the code — dual anchoring prevents broken chains.
+
+**Alternatives**: `/test` reads the PRD directly — rejected; cross-file transformation introduces uncertainty.
+
+**Impact**: `.claude/rules/file-docs.md`, `.claude/rules/testing.md`, `.claude/commands/code.md`, `.claude/commands/test.md`
+
+---
+
+## 2026-04-20: 4 sub-agents with defined roles (test-writer / code-reviewer / bug-fixer / meta-auditor)
+
+**Background**: Reviewing large directories / fixing multiple bugs in parallel / running heavy read-only scans in the main context risks context overflow, or forfeits the benefit of parallelism.
+
+**Decision**: Created `.claude/agents/` with 4 sub-agents, spawned by main commands via the `Agent` tool, each running in an independent context.
+
+| Agent | Tool Permissions | Spawned By | Why |
+|-------|-----------------|------------|-----|
+| test-writer | R / W / E / Bash | `/code` after / `/test` | Tests can run in parallel |
+| code-reviewer | R (read-only) | `/review` | Independent perspective + read-only prevents accidental edits |
+| bug-fixer | R / W / E / Bash | `/fix` | Parallel bug fixing for speed |
+| meta-auditor | R + W (report only) | `/meta-audit` | Heavy scan + read-only hard constraint |
+
+**Rationale**: Minimum tool permissions — read-only agents don't have Edit; accidental modification is prevented at the technical layer. Independent contexts produce more focused output, uncontaminated by the main session.
+
+**Impact**: `.claude/agents/*.md`, `.claude/agents/README.md`
+
+---
+
+## 2026-04-20: .claude/ mechanisms explicitly divided into 5 categories (commands / skills / agents / hooks / rules)
+
+**Background**: Various `.md` files had ambiguous responsibilities. New team members didn't know where to put things, and couldn't tell how things were triggered.
+
+**Decision**: 5 mechanism types + 5 directories + a `.claude/README.md` navigation entry point. Triggering methods, parallelism, and context isolation all differ — they cannot be used interchangeably.
+
+| Mechanism | Best For | Trigger Method |
+|-----------|---------|----------------|
+| Commands (`commands/`) | Main workflows (pure reasoning) | User types `/<name>` |
+| Skill packages (`skills/`) | Tasks that run scripts to collect data | Explicit or AI automatic |
+| Agents (`agents/`) | Parallel work / protecting the main context | Main command spawns via Agent |
+| Hooks (`hooks/`) | Silent automated checks | `settings.json` events |
+| Rules (`rules/`) | Coding constraints | Referenced from `CLAUDE.md` |
+
+**Impact**: `.claude/README.md`, each subdirectory `README.md`

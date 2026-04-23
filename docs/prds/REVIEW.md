@@ -1,214 +1,214 @@
-# PRD 人工审阅指南
+# PRD Manual Review Guide
 
-> `/prd` 生成草稿后, 必须人工审过一遍才能跑 `/plan`。本文讲怎么审、怎么改。
-> 目标: 让 PRD 通过 `/plan` 的硬性闸门, 同时避免下游污染。
+> After `/prd` generates a draft, it must be reviewed by a human before running `/plan`. This document explains how to review and how to edit.
+> Goal: Get the PRD through the hard gates in `/plan` while preventing downstream contamination.
 
 ---
 
-## 为什么必须审
+## Why Review Is Required
 
-AI 写 PRD 时, 不确定的地方会标 `[待确认]` 或 `[默认假设]`。这些标记如果带进下游:
+When AI writes a PRD, uncertain areas are marked `[pending confirmation]` or `[default assumption]`. If these markers flow downstream:
 
 ```
-PRD [待确认]  →  任务 businessRules 带 [待确认]
-              →  源码 @rules 带 [待确认]
-              →  测试 it() 断言的是占位符, 全假
+PRD [pending confirmation]  →  task businessRules carry [pending confirmation]
+                            →  source @rules carry [pending confirmation]
+                            →  test it() assertions are placeholders — all fake
 ```
 
-所以 `/plan` 入口有硬性闸门: **全文有一个 `[待确认]` 都不让走**。审阅的核心就是清零这些标记。
+Therefore `/plan` has a hard gate at the entry: **a single `[pending confirmation]` anywhere in the document blocks it**. The core purpose of review is to zero out these markers.
 
 ---
 
-## 两个标记的区别 (关键)
+## The Difference Between the Two Markers (Key)
 
-| 标记 | 含义 | `/plan` 是否拦 | 怎么处理 |
-|------|------|--------------|---------|
-| `[待确认]` | AI 完全不知道, 要人决定 | ✅ 拦 | 必须清零 |
-| `[默认假设]` | AI 按主流方案给的默认值 | ❌ 不拦 | 评审会确认即可, 不必逐个改正文 |
+| Marker | Meaning | Does `/plan` block? | How to handle |
+|--------|---------|---------------------|---------------|
+| `[pending confirmation]` | AI has no idea; a human must decide | ✅ Blocks | Must be cleared |
+| `[default assumption]` | AI provided a sensible default | ❌ Does not block | Confirm at review meeting; no need to edit the body immediately |
 
-记住: **`[默认假设]` 可以先放着跑 `/plan`**, 评审会再定。`[待确认]` 必须处理干净。
+Remember: **`[default assumption]` can stay as-is when running `/plan`** — finalize at the review meeting. `[pending confirmation]` must be fully resolved.
 
 ---
 
-## 审阅三步
+## Three-Step Review Process
 
-### 第一步: 找出所有 `[待确认]`
+### Step 1: Find all `[pending confirmation]` markers
 
-用 grep 或编辑器搜:
+Search with grep or your editor:
 
 ```bash
-grep -n "\[待确认\]" docs/prds/xxx.md
+grep -n "\[pending confirmation\]" docs/prds/xxx.md
 ```
 
-看命中数。文末的「待确认汇总」只是**导航**, 不是修改位置 — 真正要改的是正文每个命中行。
+Note the hit count. The "Pending Confirmation Summary" at the end of the file is **navigation only** — the actual lines to fix are every hit in the body.
 
-### 第二步: 逐条决策
+### Step 2: Make a decision for each one
 
-每个 `[待确认]` 都是一个决策, 不是单纯的文字替换。三种出路:
+Every `[pending confirmation]` is a decision, not just a text replacement. Three paths forward:
 
 ```
-这条规则/字段/功能, 本迭代要做吗?
-    ├─ 要做 → 去问产品/后端, 拿到答案, 填实规则 (见处理方式 1)
-    ├─ 本迭代不做, 但保留痕迹 → 标注「下迭代实现」, 清空内部细节 (见处理方式 2)
-    └─ 完全不做 → 整段删除 (见处理方式 3)
+Should this rule / field / feature be built this iteration?
+    ├─ Yes → Ask product/backend, get the answer, fill in the rule (see Approach 1)
+    ├─ Not this iteration, but keep a placeholder → Note "implement next iteration", clear internal details (see Approach 2)
+    └─ Not at all → Delete the entire section (see Approach 3)
 ```
 
-### 第三步: 验证
+### Step 3: Validate
 
-改完后跑 `/prd-check` 命令实时自检 (推荐):
+After editing, run `/prd-check` for real-time self-validation (recommended):
 
 ```bash
 /prd-check @docs/prds/xxx.md
 ```
 
-它会一次性跑 5 项检查 (待确认 / 待填写 / 业务规则占位符 / 数据契约状态 / 🆕 接口 stub), 列出所有未修复问题。修一处跑一次, 直到看到:
+It runs 5 checks at once (pending confirmation / pending fill-in / business rule placeholders / data contract status / 🆕 API stubs) and lists all unresolved issues. Fix one thing, run again, until you see:
 
 ```
-✅ PRD 完备性检查通过
+✅ PRD completeness check passed
 ```
 
-也可以用 grep 快速自查单项:
+You can also quickly verify a single item with grep:
 
 ```bash
-grep -n "\[待确认\]" docs/prds/xxx.md
-# 无输出 = 通过检查 1
+grep -n "\[pending confirmation\]" docs/prds/xxx.md
+# No output = check 1 passed
 ```
 
 ---
 
-## 处理方式 1: 填实规则
+## Approach 1: Fill In the Rule
 
-最常见。适用于「这个事要做, 只是 AI 不确定细节」。
+The most common case. Use when "this needs to be built; AI just wasn't sure about the details."
 
-### 例子: 单行字段
+### Example: Single-line field
 
-原文:
+Original:
 ```
-| [待确认] 邮箱 | string | [待确认] | [待确认] 标准邮箱格式 | - |
-```
-
-问产品「注册到底要不要邮箱」, 答「要, 必填, 做唯一性校验」, 改成:
-```
-| 邮箱 | string | 是 | 标准邮箱格式, 后端校验唯一性 | - |
+| [pending confirmation] Email | string | [pending confirmation] | [pending confirmation] standard email format | - |
 ```
 
-**要点**: `[待确认]` 前缀删掉, 内容具体化。
-
-### 例子: 业务规则
-
-原文:
+Ask product "does registration require an email?" — answer is "yes, required, with uniqueness validation" — update to:
 ```
-6. [待确认] 具体哪些页面属于「管理员专属」 — 需产品定义
+| Email | string | Yes | Standard email format; uniqueness validated by backend | - |
 ```
 
-如果答案是「由各功能 PRD 自己声明」, 这也是个决策, 改成肯定句:
+**Key point**: Remove the `[pending confirmation]` prefix and make the content specific.
+
+### Example: Business rule
+
+Original:
 ```
-6. 本 PRD 仅定义权限框架; 具体哪些页面属于「管理员专属」由各功能 PRD 在自己的权限章节声明, 本 PRD 不做列举
+6. [pending confirmation] Which specific pages are "admin-only" — product needs to define this
 ```
 
-**要点**: 哪怕决策是「交给下游」, 也得措辞肯定化, 不能留 `[待确认]` 字样。
+If the answer is "each feature PRD declares this itself," that is also a valid decision — rewrite as an affirmative statement:
+```
+6. This PRD defines only the permissions framework; which specific pages are "admin-only" is declared within each feature's own PRD permissions section — this PRD does not enumerate them
+```
+
+**Key point**: Even if the decision is "defer to downstream," the wording must be affirmative. The `[pending confirmation]` label must be gone.
 
 ---
 
-## 处理方式 2: 本迭代不做, 保留痕迹
+## Approach 2: Not This Iteration — Keep a Placeholder
 
-适用于「这个功能下迭代做, 但想保留位置提醒自己」。
+Use when "this feature will be built next iteration, but keep a reminder."
 
-### 操作
+### Steps
 
-**标题加标注 + 内部细节全清空**:
+**Add a note to the heading + clear all internal details**:
 
 ```markdown
-## 功能点 X: 忘记密码 (下迭代实现, 本版本不做)
+## Feature X: Forgot Password (next iteration — not in this release)
 
-> 📌 本功能下迭代启动, 待启动前需确认: <列出主要待定项>。
-> 本版不参与 /plan 拆解, 具体字段/规则/接口/错误码待新 PRD 细化。
+> 📌 This feature will be started next iteration. Before kickoff, confirm: <list main open items>.
+> It is not included in the current `/plan` breakdown; specific fields/rules/endpoints/error codes will be detailed in a new PRD.
 
 ---
 ```
 
-**注意**: 光改标题不行! 必须把下面所有 `[待确认]` 字样删掉。否则闸门照样拦。
+**Note**: Updating just the heading is not enough! You must delete every `[pending confirmation]` occurrence in the section body — otherwise the gate will still block.
 
-### 连带要删的地方 (容易漏)
+### Related items to clean up (easy to miss)
 
-做完标题清理后, 全文搜一遍相关内容, 一并清理:
+After updating the heading, search the full document for related content and clean it up too:
 
-- 「调用的接口」表里对应的接口行
-- 「错误码映射」里相关错误码
-- 「接口提议」章节 (文末) 相关 stub
-- 「验收清单」里提到该功能的条目
-- 「汇总」章节里相关条目
+- The corresponding endpoint row in the "Endpoints Used" table
+- Related error codes in the "Error Code Mapping" section
+- Related stubs in the "API Proposal" section (at the end of the file)
+- Any checklist items in the "Acceptance Checklist" that mention this feature
+- Related entries in the "Summary" section
 
-**验证**: grep `[待确认]` 0 命中, 且全文搜功能名 (如「忘记密码」) 只出现在保留的标题处。
-
----
-
-## 处理方式 3: 完全不做, 整段删除
-
-适用于「这事不做了, 也不用保留痕迹」。
-
-直接删整段 + 连带删所有引用 (接口/错误码/汇总/验收清单)。
-
-如果下迭代真要做, 新建一个独立 PRD (如 `docs/prds/forgot-password.md`), 比塞进来干净。
+**Validation**: grep `[pending confirmation]` returns 0 hits, and a full-document search for the feature name (e.g., "forgot password") only appears in the retained heading.
 
 ---
 
-## `[默认假设]` 怎么处理
+## Approach 3: Not Building It — Delete the Entire Section
 
-**可以不改正文**, 直接跑 `/plan`。但建议做两件事:
+Use when "this won't be built and we don't need a placeholder."
 
-1. **在 PRD 末尾做个汇总**, 方便评审会一次过
+Delete the entire section + remove all references to it (endpoints, error codes, summary, acceptance checklist).
+
+If this feature is needed in a future iteration, create a standalone PRD (e.g., `docs/prds/forgot-password.md`) — cleaner than cramming it back in.
+
+---
+
+## How to Handle `[default assumption]`
+
+**The body does not need to be changed** — you can run `/plan` as-is. However, two things are recommended:
+
+1. **Add a summary at the end of the PRD** so the review meeting can approve them all at once:
    ```markdown
-   ## 默认假设汇总 (评审会需确认)
+   ## Default Assumption Summary (to be confirmed at review meeting)
 
-   - 账号: 4-32 位字母/数字/下划线
-   - 密码: 8-32 位, 含字母+数字
+   - Account: 4–32 characters, letters/digits/underscore
+   - Password: 8–32 characters, must contain letters and digits
    - ...
    ```
 
-2. **评审通过后, 把正文里的 `[默认假设]` 标注删掉** (变成正式规则)。不删不影响 `/plan`, 但看起来更干净。
+2. **After review approval, remove the `[default assumption]` labels from the body** (they become official rules). Leaving them doesn't block `/plan`, but removing them keeps the document cleaner.
 
 ---
 
-## 常见误区
+## Common Mistakes
 
-### 误区 1: 只改汇总章节
+### Mistake 1: Only editing the summary section
 
-汇总是导航, 真正读规则的下游 (任务拆解、测试生成) 读的是**正文**。汇总里写「已确认」, 但正文 `[待确认]` 还在 → 闸门照拦, 下游照污染。
+The summary is navigation. Downstream consumers (task breakdown, test generation) read the **body**. Writing "confirmed" in the summary while `[pending confirmation]` still exists in the body → the gate still blocks, downstream still gets contaminated.
 
-### 误区 2: 光改标题写「本迭代不做」
+### Mistake 2: Only updating the heading to say "not in this iteration"
 
-标题是人看的, 闸门是**全文字符串扫描**, 不理解语义。正文 `[待确认]` 必须字面清掉。
+The heading is for humans. The gate does a **full-document string scan** — it doesn't understand semantics. Every literal `[pending confirmation]` in the body must be removed.
 
-### 误区 3: 把 `[待确认]` 替换成 `[TODO]` 或 `???`
+### Mistake 3: Replacing `[pending confirmation]` with `[TODO]` or `???`
 
-闸门还会拦这些。**只有肯定规则或整段删除才算过**。
+The gate blocks these too. **Only affirmative rules or full deletion counts as passing.**
 
-### 误区 4: 猜一个答案填上
+### Mistake 4: Guessing an answer and filling it in
 
-`[待确认]` 的本意就是「AI 不敢猜」。你也猜一个填上, 等于埋雷。**问不到就不做**, 别瞎填。
-
----
-
-## 审阅检查单 (Checklist)
-
-改完后对照这份清单:
-
-- [ ] grep `[待确认]` 零命中
-- [ ] 每个功能点要么有完整规则, 要么明确标「下迭代不做」
-- [ ] 本迭代不做的功能, 其接口/错误码/汇总相关条目也清理了
-- [ ] `[默认假设]` 在文末做了汇总 (可选)
-- [ ] 元信息的「负责人」已填
-- [ ] 「变更记录」加了本次审阅的条目
-
-全通过 → 跑 `/prd-check @docs/prds/xxx.md` 确认绿灯 → 然后跑 `/plan @docs/prds/xxx.md`。
-
-> 💡 `/plan` 内部会自动调用 `/prd-check` 作为前置闸门, 不通过直接终止。手动先跑 `/prd-check` 是为了迭代式修 PRD 时快速拿到反馈, 不用每次都触发完整的 `/plan`。
+The whole point of `[pending confirmation]` is "AI didn't dare guess." If you also guess and fill something in, you're planting a bug. **If you can't get the answer, don't build it** — don't make things up.
 
 ---
 
-## 相关文档
+## Review Checklist
 
-- [_template.md](./_template.md) — PRD 模板
-- [../WORKFLOW.md](../WORKFLOW.md) — 整体工作流
-- [.claude/commands/plan.md](../../.claude/commands/plan.md) — `/plan` 闸门具体规则
+Check against this list after editing:
+
+- [ ] grep `[pending confirmation]` returns zero hits
+- [ ] Every feature either has complete rules or is explicitly marked "not in this iteration"
+- [ ] For features not in this iteration, their related endpoints/error codes/summary entries are also cleaned up
+- [ ] `[default assumption]` items are summarized at the end of the document (optional)
+- [ ] The "Owner" field in Meta Information is filled in
+- [ ] The "Changelog" has an entry for this review
+
+All passing → run `/prd-check @docs/prds/xxx.md` to confirm green → then run `/plan @docs/prds/xxx.md`.
+
+> 💡 `/plan` internally calls `/prd-check` as a prerequisite gate and terminates if it fails. Running `/prd-check` manually first gives you fast iterative feedback when fixing the PRD — so you don't need to trigger the full `/plan` on every attempt.
+
+---
+
+## Related Documents
+
+- [_template.md](./_template.md) — PRD template
+- [../WORKFLOW.md](../WORKFLOW.md) — Overall workflow
+- [.claude/commands/plan.md](../../.claude/commands/plan.md) — Specific gate rules for `/plan`

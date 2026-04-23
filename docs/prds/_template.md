@@ -1,116 +1,116 @@
-# [模块名] PRD
+# [Module Name] PRD
 
-> 写 PRD 的核心原则: **小标题即锚点**, 后续 `@prd docs/prds/xxx.md#<锚点>` 全靠这些标题定位。
-> 所以小标题命名要稳定、明确, 不要随意改动。
+> Core principle for writing PRDs: **section headings are anchors**. All subsequent `@prd docs/prds/xxx.md#<anchor>` references rely on these headings to locate content.
+> Therefore, heading names must be stable and unambiguous — do not rename them casually.
 
-## 元信息
+## Meta Information
 
-| 项 | 值 |
-|----|----|
-| 模块代号 | `user-list` (英文, 与文件名一致) |
-| 负责人 | 张三 |
-| 创建日期 | 2026-04-14 |
-| 最后更新 | 2026-04-14 |
-| 状态 | draft / reviewing / approved / shipped |
+| Field | Value |
+|-------|-------|
+| Module Code | `user-list` (English, matches the filename) |
+| Owner | Jane Smith |
+| Created | 2026-04-14 |
+| Last Updated | 2026-04-14 |
+| Status | draft / reviewing / approved / shipped |
 
-## 背景与目标
+## Background & Goals
 
-> 为什么做这个需求? 解决什么问题? 目标用户是谁?
-> 一段话说清楚, 不要超过 200 字。
+> Why is this requirement being built? What problem does it solve? Who is the target user?
+> Explain clearly in one paragraph, no more than 200 words.
 
-## 名词解释
+## Glossary
 
-> 仅当模块涉及业务术语时填写。让 AI 和新人不会理解错。
+> Fill in only when the module involves domain-specific terminology. Prevents misunderstanding by AI or new team members.
 
-| 术语 | 含义 |
-|------|------|
-| 配额 | 用户每月可用的接口调用次数上限 |
+| Term | Definition |
+|------|------------|
+| Quota | The maximum number of API calls a user can make per month |
 
-## 设计稿
+## Design Specs
 
-> 设计稿是视觉规范的唯一来源, 与 PRD 的业务规则互补: PRD 管「做什么」, 设计稿管「长什么样」。
-> 三种来源方式可并存, 有什么填什么, 留空不阻塞。
+> Design specs are the sole source of visual truth, complementing the business rules in the PRD: the PRD defines "what to build"; the design spec defines "what it looks like."
+> Multiple source types can coexist — fill in whatever is available; leaving fields empty does not block progress.
 
-| 项 | 值 |
-|----|----|
-| 来源类型 | link / file / mcp (可多选) |
-| Figma 链接 | `https://figma.com/file/xxx` (无则留空) |
-| 本地文件 | `docs/designs/xxx.png` 或 `docs/designs/xxx.sketch` (无则留空) |
-| MCP 配置 | figma-mcp 已接入 / 未接入 |
+| Field | Value |
+|-------|-------|
+| Source Type | link / file / mcp (multiple allowed) |
+| Figma Link | `https://figma.com/file/xxx` (leave blank if none) |
+| Local File | `docs/designs/xxx.png` or `docs/designs/xxx.sketch` (leave blank if none) |
+| MCP Config | figma-mcp connected / not connected |
 
-### 功能点与设计帧映射
+### Feature-to-Design Frame Mapping
 
-> 每个功能点对应设计稿的哪一帧 / 哪一页, 便于 `/plan` 拆任务和 `/code` 编码时对照。
+> Maps each feature to the corresponding frame/page in the design spec, making it easier for `/plan` to break down tasks and `/code` to reference during implementation.
 
-| 功能点 (PRD 锚点) | 设计引用 |
-|-------------------|---------|
-| #搜索表单 | Figma: `<URL>#Frame-SearchForm` 或 `docs/designs/search-form.png` |
-| #数据列表 | Figma: `<URL>#Frame-DataTable` |
+| Feature (PRD anchor) | Design Reference |
+|----------------------|-----------------|
+| #search-form | Figma: `<URL>#Frame-SearchForm` or `docs/designs/search-form.png` |
+| #data-table | Figma: `<URL>#Frame-DataTable` |
 
-> **注意**:
-> - Figma 链接优先 (永远指向最新版), 本地文件会过期
-> - MCP 接入后, `/code` 阶段可实时从 Figma 提取 Design Token, 不需手动导出
-> - 切图 / 图标等代码直接消费的资源, 导出到 `workspace/public/images/`
+> **Notes**:
+> - Prefer Figma links (always point to the latest version); local files go stale
+> - Once MCP is connected, `/code` can extract Design Tokens from Figma in real time — no manual export needed
+> - Assets consumed directly by code (icons, image slices, etc.) should be exported to `workspace/public/images/`
 
 ---
 
-## 功能点 1: [小标题作为锚点]
+## Feature 1: [Heading as Anchor]
 
-> 每个功能点一个二级标题, 标题就是锚点。
-> 例如 `## 搜索表单` → `@prd docs/prds/user-list.md#搜索表单`
+> One second-level heading per feature; the heading itself is the anchor.
+> e.g. `## Search Form` → `@prd docs/prds/user-list.md#search-form`
 
-### 用户故事
+### User Story
 
-> 作为 [角色], 我希望 [功能], 以便 [价值]。
+> As a [role], I want [feature], so that [value].
 
-### 字段定义 (如有表单/数据)
+### Field Definitions (for forms / data)
 
-| 字段 | 类型 | 必填 | 校验规则 | 默认值 |
-|------|------|------|---------|--------|
-| 手机号 | string | 否 | 11 位, 1 开头, 第二位 3-9 | - |
-| 状态 | enum | 否 | 启用 / 禁用 / 全部 | 全部 |
+| Field | Type | Required | Validation | Default |
+|-------|------|----------|------------|---------|
+| Phone Number | string | No | 11 digits, starts with 1, second digit 3–9 | — |
+| Status | enum | No | Enabled / Disabled / All | All |
 
-### 业务规则 (重要, 这是测试断言的来源)
+### Business Rules (important — these are the source for test assertions)
 
-> 每条规则必须可测试, 用「当...时, 应...」句式更清晰。
-> 避免技术实现描述, 只写业务语义。
+> Every rule must be testable. Using "when... then..." phrasing improves clarity.
+> Avoid describing technical implementation — write business semantics only.
 
-1. 手机号格式不合法时, 表单实时显示错误提示, 搜索按钮禁用
-2. 所有字段为空时, 搜索按钮禁用
-3. 重置按钮清空字段后, 自动触发一次查询 (不用用户再点搜索)
+1. When the phone number format is invalid, display an inline error message in real time and disable the search button
+2. When all fields are empty, the search button is disabled
+3. After the reset button clears all fields, one search is automatically triggered (the user does not need to click Search again)
 
-### 数据契约 (引用 OpenAPI)
+### Data Contract (referencing OpenAPI)
 
-> **字段细节以 OpenAPI 为准** (见 `workspace/api-spec/openapi.json`), 本章节只写**业务相关信息**: 调用哪些接口、错误码如何映射到业务行为、mock 数据约定。
-> 字段类型在 OpenAPI 一处定义, 前端通过 `pnpm gen:api` 自动生成 `workspace/src/types/api.ts`, 不在 PRD 重复维护。
+> **Field details are defined by OpenAPI** (see `workspace/api-spec/openapi.json`). This section only covers **business-relevant information**: which endpoints are called, how error codes map to business behavior, and mock data conventions.
+> Field types are defined once in OpenAPI; the frontend auto-generates `workspace/src/types/api.ts` via `pnpm gen:api` — no need to duplicate them here.
 
-#### 调用的接口
+#### Endpoints Used
 
-| 业务操作 | operationId | 方法 | 路径 | 状态 |
-|---------|-------------|------|------|------|
-| 搜索用户 | `searchUsers` | GET | `/api/users/search` | ✅ 已存在 |
-| 查看详情 | `getUserById` | GET | `/api/users/{id}` | ✅ 已存在 |
-| 导出 Excel | `exportUsers` | POST | `/api/users/export` | 🆕 待后端实现 (见下方接口提议) |
+| Business Operation | operationId | Method | Path | Status |
+|--------------------|-------------|--------|------|--------|
+| Search users | `searchUsers` | GET | `/api/users/search` | ✅ Exists |
+| View detail | `getUserById` | GET | `/api/users/{id}` | ✅ Exists |
+| Export Excel | `exportUsers` | POST | `/api/users/export` | 🆕 Pending backend (see API proposal below) |
 
-> **状态字段**:
-> - ✅ 已存在: `workspace/api-spec/openapi.json` 里已定义, 直接用
-> - 🆕 待后端实现: 前端基于 PRD 写了 stub 提议, 评审后进 `workspace/api-spec/openapi.local.json` 先开发, 后端实现后移除
+> **Status values**:
+> - ✅ Exists: already defined in `workspace/api-spec/openapi.json`; use directly
+> - 🆕 Pending backend: frontend has written a stub proposal; once reviewed, it goes into `workspace/api-spec/openapi.local.json` for local development until the backend implements it
 
-> 字段定义、参数约束、响应结构 → 看 `workspace/api-spec/openapi.json` (或 `workspace/api-spec/openapi.local.json`) 中的对应 operationId。
+> Field definitions, parameter constraints, and response structures → see the corresponding `operationId` in `workspace/api-spec/openapi.json` (or `workspace/api-spec/openapi.local.json`).
 
-#### 接口提议 (仅当有 🆕 接口时填写)
+#### API Proposal (fill in only when there are 🆕 endpoints)
 
-> 前端先写一份 OpenAPI stub, 经前后端评审后:
-> - 放入 `api-spec/openapi.local.json` 本地开发 (紧急兜底)
-> - 或直接由后端合并到主 `openapi.json` (推荐, 双方从此共用同一份)
+> The frontend writes an OpenAPI stub first. After frontend/backend review:
+> - Place it in `api-spec/openapi.local.json` for local development (emergency fallback)
+> - Or have the backend merge it directly into the main `openapi.json` (recommended — both sides share the same source from then on)
 
 ```yaml
-# 示例: 导出用户列表接口
+# Example: export user list endpoint
 paths:
   /api/users/export:
     post:
       operationId: exportUsers
-      summary: 导出符合筛选条件的用户为 Excel
+      summary: Export filtered users as Excel
       requestBody:
         required: true
         content:
@@ -122,69 +122,69 @@ paths:
                 status: { type: string, enum: [enabled, disabled] }
       responses:
         '200':
-          description: Excel 文件流
+          description: Excel file stream
           content:
             application/octet-stream:
               schema: { type: string, format: binary }
 ```
 
-> ⚠️ 评审通过后记得把状态从 🆕 改为 ✅, 避免前端以为还要等后端。
+> ⚠️ After review approval, remember to change the status from 🆕 to ✅ so the frontend doesn't think it's still waiting on the backend.
 
-#### 错误码映射 (业务侧定义)
+#### Error Code Mapping (business-side definitions)
 
-> OpenAPI 只定义错误码存在, **如何处理是业务决策**, 必须在这里写。
+> OpenAPI only defines that error codes exist. **How to handle them is a business decision** and must be specified here.
 
-| code | 含义 | 前端处理 |
-|------|------|---------|
-| 0 | 成功 | - |
-| 40001 | 参数非法 | 表单 inline 错误提示 |
-| 40301 | 无权限 | 跳 `/403` |
-| 50001 | 服务异常 | 自动重试 1 次, 仍失败弹 toast |
+| code | Meaning | Frontend Behavior |
+|------|---------|-------------------|
+| 0 | Success | — |
+| 40001 | Invalid parameters | Inline form error message |
+| 40301 | Unauthorized | Redirect to `/403` |
+| 50001 | Server error | Auto-retry once; show toast on second failure |
 
-#### Mock 数据约定
+#### Mock Data Conventions
 
-- 后端未就绪期间, 在 `workspace/mock/` 写假数据, **必须 import 生成的类型** 保证结构对齐:
+- While the backend is not ready, write mock data in `workspace/mock/`. **You must import the generated types** to ensure structural alignment:
   ```typescript
   import type { paths } from '@/types/api';
   type SearchResp = paths['/api/users/search']['get']['responses']['200']['content']['application/json'];
   ```
-- 联调时通过 `workspace/config/proxy.ts` 切换到真实后端
-- 任何字段变更不要手改 mock, 先推后端更新 OpenAPI, 拉取新 json 后让 TS 编译告诉你哪里要改
+- Switch to the real backend during integration testing via `workspace/config/proxy.ts`
+- Never manually edit mock data when fields change — push the backend to update OpenAPI first, then pull the new JSON and let TypeScript compilation tell you what needs fixing
 
-### 交互流程
+### Interaction Flow
 
-> 文字描述或简单流程图。
+> Text description or simple flow diagram.
 
 ```
-用户输入手机号 → 实时校验 → 通过则启用搜索按钮 → 点击搜索 → loading → 列表更新
+User enters phone number → real-time validation → if valid, enable search button → click Search → loading → list updates
 ```
 
-### 异常场景
+### Error Scenarios
 
-| 场景 | 预期行为 |
-|------|---------|
-| 接口超时 | 显示 `加载失败, 请重试`, 提供「重试」按钮 |
-| 无权限 | 跳转 `/403` |
-| 数据为空 | 显示 antd `Empty` 组件 |
+| Scenario | Expected Behavior |
+|----------|-------------------|
+| API timeout | Show "Load failed, please retry" with a Retry button |
+| Unauthorized | Redirect to `/403` |
+| Empty data | Show antd `Empty` component |
 
 ---
 
-## 功能点 2: [下一个小标题]
+## Feature 2: [Next Heading]
 
-(同上结构)
+(Same structure as above)
 
 ---
 
-## 验收清单 (可选)
+## Acceptance Checklist (optional)
 
-> 上线前的整体验收点, 跨多个功能点的集成性要求。
+> Overall acceptance criteria before launch; integration requirements that span multiple features.
 
-- [ ] 整个模块在 Chrome / Safari / 移动端 H5 三端正常显示
-- [ ] 所有接口都有 loading 和 error 处理
-- [ ] 国际化文案齐全 (中/英)
+- [ ] The entire module displays correctly on Chrome, Safari, and mobile H5
+- [ ] All endpoints have loading and error handling
+- [ ] All i18n copy is complete (EN/ZH)
 
-## 变更记录
+## Changelog
 
-| 日期 | 变更内容 | 变更人 |
-|------|---------|--------|
-| 2026-04-14 | 初版 | 张三 |
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-04-14 | Initial version | Jane Smith |

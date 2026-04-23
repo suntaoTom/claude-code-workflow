@@ -1,92 +1,92 @@
-# skills/ — Claude Code 技能包
+# skills/ — Claude Code Skill Packages
 
-> 包形式的扩展技能。含 `SKILL.md` 主说明 + `scripts/` 确定性脚本 + `references/` 参考资料。
-> 与 `commands/*.md` (单文件 prompt) 的区别: 包形式可以跑脚本拿真实数据, 减少 AI 猜测。
+> Extension skills in package form. Each package contains a `SKILL.md` main description + `scripts/` for deterministic scripts + `references/` for reference material.
+> Difference from `commands/*.md` (single-file prompts): package form can run scripts to fetch real data, reducing AI guesswork.
 
-## 文件清单
+## File Manifest
 
-| 技能 | 用途 | 触发场景 |
-|------|------|---------|
-| [prd-import/](prd-import/) | 非 md 需求格式转换 (.docx/.xlsx/.pptx → md) | 产品给了 Word/Excel/PPT 需求, 作为 `/prd` 的入口 |
-| [ext-dep-audit/](ext-dep-audit/) | 依赖安全与健康度审计 | 依赖巡检 / 安全扫描 |
-| [ext-perf-audit/](ext-perf-audit/) | 前端性能审计 | 页面卡顿分析 / 发版前优化 |
-| [ext-a11y-check/](ext-a11y-check/) | 无障碍 WCAG 2.1 AA 合规检查 | 合规审计 / 键盘操作支持 |
-| [ext-changelog/](ext-changelog/) | 按模块聚合的变更影响报告 | 周报 / 交接 / 复盘 |
+| Skill | Purpose | Trigger Scenario |
+|-------|---------|-----------------|
+| [prd-import/](prd-import/) | Convert non-Markdown requirement formats (.docx/.xlsx/.pptx → md) | Product hands over a Word/Excel/PPT spec, as the entry point for `/prd` |
+| [ext-dep-audit/](ext-dep-audit/) | Dependency security and health audit | Dependency inspection / security scanning |
+| [ext-perf-audit/](ext-perf-audit/) | Frontend performance audit | Page lag analysis / pre-release optimization |
+| [ext-a11y-check/](ext-a11y-check/) | Accessibility WCAG 2.1 AA compliance check | Compliance audit / keyboard navigation support |
+| [ext-changelog/](ext-changelog/) | Module-aggregated change impact report | Weekly reports / handoffs / retrospectives |
 
-## 命名约定
+## Naming Conventions
 
-- `ext-*` 前缀 = **扩展可选技能**, 按需使用, 非主流程
-- 无前缀 = **主流程配套技能**, 支撑八步法某个环节 (如 `prd-import` 支撑 `/prd` 的入口)
+- `ext-*` prefix = **optional extension skill**, used on demand, not part of the main flow
+- No prefix = **main-flow companion skill**, supports a specific step in the Eight-Step process (e.g. `prd-import` supports the `/prd` entry point)
 
-## 目录结构约定
+## Directory Structure Convention
 
 ```
 skills/<skill-name>/
-├── SKILL.md              # 主说明, 含 frontmatter (name + description)
-├── scripts/              # 确定性脚本 (可选)
-│   └── xxx.sh            # bash 脚本, 负责跑真实命令拿数据
-└── references/           # 参考资料 (可选)
-    └── xxx.md            # 大块参考文档, 按需读取 (避免每次塞进 context)
+├── SKILL.md              # Main description, with frontmatter (name + description)
+├── scripts/              # Deterministic scripts (optional)
+│   └── xxx.sh            # Bash scripts that run real commands to collect data
+└── references/           # Reference material (optional)
+    └── xxx.md            # Large reference docs, loaded on demand (to avoid bloating context every time)
 ```
 
-## SKILL.md 格式
+## SKILL.md Format
 
 ```markdown
 ---
-name: <skill-name>           # 唯一标识, 与目录名一致
-description: <一句话>         # 关键: 决定 AI 何时自动触发该技能, 要具体
+name: <skill-name>           # Unique identifier, must match the directory name
+description: <one sentence>  # Key: determines when AI auto-triggers this skill — be specific
 ---
 
 # <skill-name>
 
-<skill 的完整说明: 职责 / 执行流程 / 输出格式 / 设计原则>
+<Full skill description: responsibilities / execution flow / output format / design principles>
 ```
 
-### description 字段要怎么写
+### How to Write the `description` Field
 
-决定 AI 是否自动调用该技能的**唯一依据**, 要包含:
-- **做什么** (一句话)
-- **什么时候用** (具体关键词: 「用户明确要求『X / Y / Z』时触发」)
+This is the **sole basis** for whether AI automatically invokes a skill. It must include:
+- **What it does** (one sentence)
+- **When to use it** (specific keywords: "trigger when the user explicitly requests 'X / Y / Z'")
 
-**反例** (太泛): `description: 性能相关`
-**正例**: `description: 前端性能审计。分析包体积、React 渲染性能、网络瀑布、内存泄漏、首屏加载。用户明确要求「性能审计 / 页面卡顿分析 / 包体积优化 / 首屏优化」时触发。`
+**Bad example** (too vague): `description: performance-related`
+**Good example**: `description: Frontend performance audit. Analyzes bundle size, React render performance, network waterfall, memory leaks, and initial load. Trigger when the user explicitly requests "performance audit / page lag analysis / bundle size optimization / initial load optimization".`
 
-## 脚本规范
+## Script Conventions
 
-- 放在 `scripts/` 子目录, 命名 kebab-case
-- 顶部注释写明用法和参数
-- 统一路径解析: `ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"` 回到仓库根
-- 失败不 exit 1, 输出提示让 AI 理解 (脚本是给 AI 用的数据源, 不是 CI 门禁)
-- 加可执行权限: `chmod +x`
+- Placed in the `scripts/` subdirectory, named in kebab-case
+- Top-of-file comment documents usage and parameters
+- Unified path resolution: `ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"` to return to the repo root
+- Do not `exit 1` on failure; output a message the AI can understand (scripts are a data source for AI, not a CI gate)
+- Add execute permission: `chmod +x`
 
-## references 规范
+## References Conventions
 
-- 放在 `references/` 子目录, 都是 markdown
-- **不要塞进 SKILL.md**, 要做按需加载 (SKILL.md 里用 `[链接](references/xxx.md)` 引用)
-- 适合放什么: WCAG 规则清单、checklist、对照表、常见反模式
-- 不适合放什么: 会变的业务规则 (那是 PRD 的事)
+- Placed in the `references/` subdirectory; all files are Markdown
+- **Do not embed in SKILL.md** — reference on demand (use `[link](references/xxx.md)` in SKILL.md)
+- Suitable content: WCAG rule lists, checklists, comparison tables, common anti-patterns
+- Unsuitable content: changing business rules (those belong in the PRD)
 
-## 添加新技能
+## Adding a New Skill
 
-1. 创建 `skills/<新技能名>/` 目录
-2. 写 `SKILL.md` (frontmatter + body)
-3. 按需加 `scripts/` 和 `references/`
-4. 脚本加可执行权限
-5. 在本 README 的文件清单加一行
-6. 如果是 `ext-` 前缀, 在 `docs/WORKFLOW.md` 的「扩展命令」章节登记
+1. Create the `skills/<new-skill-name>/` directory
+2. Write `SKILL.md` (frontmatter + body)
+3. Add `scripts/` and `references/` as needed
+4. Add execute permission to scripts
+5. Add a row to the File Manifest in this README
+6. If it has an `ext-` prefix, register it in the "Extension Commands" section of `docs/WORKFLOW.md`
 
-## skills/ vs commands/ 怎么选
+## skills/ vs commands/ — How to Choose
 
-| 场景 | 放哪里 |
-|------|-------|
-| 纯 prompt 工作流, 没有脚本可跑 (如 `/prd` `/plan` `/code`) | `commands/*.md` |
-| 需要跑脚本拿真实数据 (体积/git log/pnpm 输出) | `skills/<name>/` 包形式 |
-| 有大块参考资料, 不适合每次都灌进 context | `skills/<name>/references/` |
-| 跨项目复用 (通用能力) | 可移到 `~/.claude/skills/` 全局 |
+| Scenario | Where to Put It |
+|----------|----------------|
+| Pure prompt workflow with no scripts to run (e.g. `/prd` `/plan` `/code`) | `commands/*.md` |
+| Needs to run scripts to fetch real data (bundle size / git log / pnpm output) | `skills/<name>/` package form |
+| Has large reference material not suitable for injecting into context every time | `skills/<name>/references/` |
+| Cross-project reuse (general-purpose capability) | Can be moved to `~/.claude/skills/` globally |
 
-## 设计原则
+## Design Principles
 
-- **脚本拿数据, AI 做解读** — 能确定性度量的就别让 AI 估算
-- **渐进式加载** — 大参考文档放 references, SKILL.md 只引用, 不内嵌
-- **description 要具体** — 含触发关键词, AI 才能正确识别
-- **只读默认** — 分析类技能不直接改代码, 修复走 `/fix`
+- **Scripts fetch data; AI interprets** — if something can be measured deterministically, don't ask AI to estimate it
+- **Progressive loading** — large reference docs go in `references/`; `SKILL.md` references them, doesn't embed them
+- **Be specific in `description`** — include trigger keywords so AI can correctly identify when to invoke
+- **Read-only by default** — analysis skills do not modify code directly; fixes go through `/fix`
