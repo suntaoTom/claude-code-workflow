@@ -1,142 +1,142 @@
-# 文件与模块说明规范
+# File & Module Documentation Convention
 
-> 目的: 让任何 AI 模型或开发者接手项目时，能快速理解每个目录和文件的作用，降低维护成本。
+> Purpose: Allow any AI model or developer taking over the project to quickly understand the role of each directory and file, reducing maintenance cost.
 
-## 核心规则
+## Core Rule
 
-**每次创建或修改代码文件时，必须同步维护所在目录的 `README.md`。**
+**Every time you create or modify a code file, you must also update the `README.md` of its directory.**
 
-## 目录级 README.md
+## Directory-level README.md
 
-每个功能目录（components/, hooks/, stores/, utils/, api/, types/）都必须有一个 `README.md`，格式如下：
-
-```markdown
-# 目录名称
-
-> 一句话描述这个目录的职责
-
-## 文件清单
-
-| 文件名 | 说明 | 依赖 | 最后更新 |
-|--------|------|------|----------|
-| UserProfile.tsx | 用户资料展示组件，支持编辑模式 | useUserData, UserAvatar | 2026-03-30 |
-| UserCard.tsx | 用户卡片缩略组件 | Avatar (antd) | 2026-03-30 |
-
-## 模块关系
-
-> 简要描述本目录内文件之间、以及与其他模块的依赖关系
-```
-
-## 功能模块级 README.md
-
-每个 `workspace/src/features/[module]/` 目录必须有一个顶层 `README.md`，格式如下：
+Every feature directory (components/, hooks/, stores/, utils/, api/, types/) must have a `README.md` in the following format:
 
 ```markdown
-# 模块名称
+# Directory Name
 
-> 模块的业务功能描述
+> One-line description of this directory's responsibility
 
-## 子目录结构
+## File Manifest
 
-| 目录 | 说明 |
-|------|------|
-| components/ | 模块专属 UI 组件 |
-| hooks/ | 模块数据逻辑 hooks |
-| api/ | 后端接口请求封装 |
-| stores/ | Zustand 状态管理 |
-| types/ | TypeScript 类型定义 |
-| utils/ | 模块工具函数 |
+| File | Description | Dependencies | Last Updated |
+|------|-------------|--------------|--------------|
+| UserProfile.tsx | User profile display component, supports edit mode | useUserData, UserAvatar | 2026-03-30 |
+| UserCard.tsx | Compact user card component | Avatar (antd) | 2026-03-30 |
 
-## 核心业务流程
+## Module Relationships
 
-> 用文字或简单流程描述核心逻辑，例如：
-> 用户登录 → 调用 api/login → store 存 token → 跳转首页
-
-## 对外暴露
-
-> 列出本模块向外导出的主要组件、hooks、类型，供其他模块引用
+> Briefly describe the dependencies between files in this directory and other modules
 ```
 
-## 文件头部注释
+## Feature Module-level README.md
 
-每个代码文件顶部必须包含说明注释：
+Every `workspace/src/features/[module]/` directory must have a top-level `README.md` in the following format:
+
+```markdown
+# Module Name
+
+> Business function description of this module
+
+## Subdirectory Structure
+
+| Directory | Description |
+|-----------|-------------|
+| components/ | Module-specific UI components |
+| hooks/ | Module data-logic hooks |
+| api/ | Backend request wrappers |
+| stores/ | Zustand state management |
+| types/ | TypeScript type definitions |
+| utils/ | Module utility functions |
+
+## Core Business Flow
+
+> Describe core logic in text or a simple flow, e.g.:
+> User login → call api/login → store saves token → redirect to home
+
+## Public Exports
+
+> List the main components, hooks, and types this module exports for use by other modules
+```
+
+## File Header Comment
+
+Every code file must include a documentation comment at the top:
 
 ```typescript
 /**
- * @description 用户资料展示组件，支持查看和编辑两种模式
+ * @description User profile display component, supports view and edit modes
  * @module features/user/components
  * @dependencies useUserData, useAuthStore, Avatar (antd)
- * @prd docs/prds/user-module.md#用户资料
+ * @prd docs/prds/user-module.md#user-profile
  * @task docs/tasks/tasks-user.json#task-012
- * @design Figma: https://figma.com/file/xxx#Frame-UserProfile 或 docs/designs/user-profile.png
+ * @design Figma: https://figma.com/file/xxx#Frame-UserProfile or docs/designs/user-profile.png
  * @rules
- *   - 非登录用户只能看公开字段 (昵称、头像)
- *   - 编辑模式下, 手机号需通过 PHONE_REG 校验
- *   - 保存失败时保留表单内容并提示错误
+ *   - Unauthenticated users can only see public fields (nickname, avatar)
+ *   - In edit mode, phone number must pass PHONE_REG validation
+ *   - On save failure, retain form content and display error message
  * @example
  *   <UserProfile userId="123" editable />
  */
 ```
 
-对于不同类型的文件，注释需包含：
+Required fields by file type:
 
-- **组件**: description, module, dependencies, **prd, task, design, rules**, props 说明, example
-- **hooks**: description, module, **prd, task, rules**, params, returns, example
-- **stores**: description, module, **prd, task, rules**, state 字段说明, actions 说明
-- **utils**: description, module, params, returns, example (纯工具函数通常无需 prd/rules)
-- **api**: description, module, **prd**, 请求方法, 请求路径, params, returns
-- **types**: description, module, 各字段说明
+- **Components**: description, module, dependencies, **prd, task, design, rules**, props description, example
+- **Hooks**: description, module, **prd, task, rules**, params, returns, example
+- **Stores**: description, module, **prd, task, rules**, state field descriptions, actions description
+- **Utils**: description, module, params, returns, example (pure utility functions typically don't need prd/rules)
+- **API**: description, module, **prd**, HTTP method, endpoint path, params, returns
+- **Types**: description, module, field descriptions
 
-### 业务锚点字段说明 (重要)
+### Business Anchor Fields (Important)
 
-`@prd` / `@task` / `@design` / `@rules` 是「需求 → 设计 → 代码 → 测试」可追溯链的关键, **编码时必须同步写入**:
+`@prd` / `@task` / `@design` / `@rules` are the key to the "Requirements → Design → Code → Test" traceability chain. **They must be written in sync with the code**:
 
-| 字段 | 格式 | 作用 |
-|------|------|------|
-| `@prd` | `docs/prds/<文件>.md#<锚点>` | 指向对应的 PRD 片段, 供查阅需求原文 |
-| `@task` | `docs/tasks/<文件>.json#<taskId>` | 指向 `/plan` 生成的任务条目 |
-| `@design` | Figma URL / 本地文件路径 / 空 | 指向设计稿帧, 供对照视觉规范 (无设计稿可省略) |
-| `@rules` | 多行中文规则列表, 每行一条 | 本文件承载的**业务规则**, 是测试断言的唯一来源 |
+| Field | Format | Purpose |
+|-------|--------|---------|
+| `@prd` | `docs/prds/<file>.md#<anchor>` | Points to the corresponding PRD section for reference |
+| `@task` | `docs/tasks/<file>.json#<taskId>` | Points to the task entry generated by `/plan` |
+| `@design` | Figma URL / local file path / empty | Points to a design frame for visual spec reference (omit if no design) |
+| `@rules` | Multi-line rule list, one rule per line | **Business rules** carried by this file; the sole source for test assertions |
 
-**`@rules` 的写法原则**:
-- 只写**业务规则**, 不写技术实现 (✅「手机号需校验」 ❌「使用 useState 管理表单」)
-- 每条规则都应该可以转化为一个测试用例
-- 如果规则来自 PRD, 尽量保留原文措辞, 便于对齐
-- 无业务规则的纯工具函数可省略 (如 `formatDate`), 但测试预期必须来自函数签名/JSDoc
+**`@rules` writing principles**:
+- Write only **business rules**, not technical implementation (✅ "phone number must be validated" ❌ "use useState to manage form state")
+- Every rule should be convertible into a test case
+- If the rule comes from a PRD, preserve the original wording for alignment
+- Pure utility functions with no business rules may omit `@rules` (e.g., `formatDate`), but test expectations must still come from the function signature/JSDoc
 
-**测试生成时的作用**: `/test` 命令会读取 `@rules` 作为测试用例骨架, 每条规则对应一个 `it()`, 从根本上避免 AI「根据源码猜预期」的问题。详见 `.claude/commands/test.md`。
+**Role in test generation**: The `/test` command reads `@rules` as the test case skeleton — one `it()` per rule — fundamentally preventing AI from "guessing expectations from source code." See `.claude/commands/test.md` for details.
 
-## 触发时机
+## When to Update
 
-以下操作必须同步更新对应 README.md：
+The following actions require a corresponding README.md update:
 
-1. **新建文件** → 在目录 README.md 的文件清单中新增一行
-2. **删除文件** → 从目录 README.md 中移除对应行
-3. **重命名文件** → 更新 README.md 中的文件名
-4. **修改文件职责** → 更新 README.md 中的说明列
-5. **新建功能模块** → 创建模块级 README.md
-6. **修改模块依赖关系** → 更新模块间关系描述
+1. **New file** → add a row to the directory README.md file manifest
+2. **Deleted file** → remove the corresponding row from the directory README.md
+3. **Renamed file** → update the filename in README.md
+4. **Changed file responsibility** → update the description column in README.md
+5. **New feature module** → create a module-level README.md
+6. **Changed module dependency** → update the module relationship description
 
-## 全局索引
+## Global Index
 
-在 `workspace/src/README.md` 中维护一个项目整体索引：
+Maintain a project-wide index in `workspace/src/README.md`:
 
 ```markdown
-# 项目模块索引
+# Project Module Index
 
-## 功能模块 (features/)
+## Feature Modules (features/)
 
-| 模块 | 说明 | 状态 |
-|------|------|------|
-| user | 用户管理（登录/注册/资料） | 开发中 |
-| dashboard | 数据看板 | 已完成 |
+| Module | Description | Status |
+|--------|-------------|--------|
+| user | User management (login / register / profile) | In progress |
+| dashboard | Data dashboard | Complete |
 
-## 全局通用
+## Global Shared
 
-| 目录 | 说明 |
-|------|------|
-| components/ | 通用 UI 组件 |
-| hooks/ | 通用 hooks |
-| lib/ | 第三方库封装 |
-| types/ | 全局类型定义 |
+| Directory | Description |
+|-----------|-------------|
+| components/ | Shared UI components |
+| hooks/ | Shared hooks |
+| lib/ | Third-party library wrappers |
+| types/ | Global type definitions |
 ```

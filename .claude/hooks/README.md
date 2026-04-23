@@ -1,31 +1,31 @@
-# hooks/ — Claude Code 自动化钩子
+# hooks/ — Claude Code Automation Hooks
 
-> 配置在 `.claude/settings.json` 中, 在特定事件时自动执行。只提醒, 不阻断。
+> Configured in `.claude/settings.json`, executed automatically on specific events. Warn only — never block.
 
-## 文件清单
+## File Manifest
 
-| 文件 | 触发时机 | 作用 |
-|------|---------|------|
-| check-hardcode.sh | 每次编辑/创建 ts/tsx 文件后 | 扫描中文硬编码, 违反 P0 规则立刻警告 |
-| check-tasks-status.sh | 每次开启新会话时 | 列出 in-progress 的任务, 提醒上次中断位置 |
-| pre-commit-check.sh | git commit 前 | 检查任务状态是否忘记更新为 done |
+| File | Trigger | Purpose |
+|------|---------|---------|
+| check-hardcode.sh | After each ts/tsx file edit/create | Scans for hardcoded Chinese strings; warns immediately on P0 rule violations |
+| check-tasks-status.sh | At the start of each new session | Lists in-progress tasks; reminds where the last session left off |
+| pre-commit-check.sh | Before git commit | Checks whether task status was forgotten to be updated to done |
 
-## 添加新 hook
+## Adding a New Hook
 
-1. 在本目录创建 `.sh` 脚本, 加 `chmod +x`
-2. 脚本顶部注释写明: 触发时机 + 作用
-3. 在 `.claude/settings.json` 的对应事件下引用: `".claude/hooks/xxx.sh"`
-4. 更新本 README 的文件清单
+1. Create a `.sh` script in this directory and run `chmod +x`
+2. Add a comment at the top of the script stating: trigger event + purpose
+3. Reference it under the corresponding event in `.claude/settings.json`: `".claude/hooks/xxx.sh"`
+4. Update the file manifest in this README
 
-## 可用的环境变量
+## Available Environment Variables
 
-| 变量 | 可用事件 | 说明 |
-|------|---------|------|
-| `$CLAUDE_FILE_PATH` | PostToolUse (Edit/Write) | 刚编辑的文件路径 |
-| `$CLAUDE_TOOL_INPUT` | PreToolUse | 即将执行的工具输入内容 |
+| Variable | Available In | Description |
+|----------|-------------|-------------|
+| `$CLAUDE_FILE_PATH` | PostToolUse (Edit/Write) | Path of the file just edited |
+| `$CLAUDE_TOOL_INPUT` | PreToolUse | Input content of the tool about to be executed |
 
-## 设计原则
+## Design Principles
 
-- 只提醒, 不阻断 (exit 0, 不 exit 1)
-- 没问题就静默, 有问题才输出
-- 超时 5 秒, 不做重操作
+- Warn only, never block (exit 0, not exit 1)
+- Silent when no issues; output only when something is wrong
+- 5-second timeout; no heavy operations

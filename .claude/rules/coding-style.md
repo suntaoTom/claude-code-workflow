@@ -1,99 +1,99 @@
-# 编码规范
+# Coding Style
 
-## 命名规则
+## Naming Conventions
 
-- 组件: PascalCase (UserProfile.tsx)
-- hooks: camelCase, use 前缀 (useUserData.ts)
-- 工具函数: camelCase (formatDate.ts)
-- 类型/接口: PascalCase, 不加 I 前缀 (UserProfile, not IUserProfile)
-- 常量: UPPER_SNAKE_CASE (MAX_RETRY_COUNT)
-- 页面文件: 放在 pages/ 下, 遵循 Umi 约定式路由规则
-- CSS: 使用 CSS Modules (.module.less) 或 Ant Design token 定制, 不写全局样式污染
+- Components: PascalCase (UserProfile.tsx)
+- Hooks: camelCase with `use` prefix (useUserData.ts)
+- Utility functions: camelCase (formatDate.ts)
+- Types/Interfaces: PascalCase, no `I` prefix (UserProfile, not IUserProfile)
+- Constants: UPPER_SNAKE_CASE (MAX_RETRY_COUNT)
+- Page files: placed under `pages/`, following Umi convention-based routing rules
+- CSS: use CSS Modules (.module.less) or Ant Design token customization; no global style pollution
 
-## 注释规范
+## Comment Guidelines
 
-### 原则：注释解释"为什么"，代码本身说明"是什么"
+### Principle: Comments explain "why"; code explains "what"
 
-好的命名和类型就是最好的文档，不需要注释来复述代码在做什么。
+Good naming and types are the best documentation — no need for comments that restate what the code does.
 
-### 必须写注释的场景
+### When comments are required
 
-1. **文件头部 JSDoc** — 每个文件必须有（见 file-docs.md），这是给 AI 和新人的入口
-2. **业务规则 / 领域逻辑** — 代码背后的"为什么"，不写就没人知道
+1. **File header JSDoc** — every file must have one (see file-docs.md); this is the entry point for AI and new team members
+2. **Business rules / domain logic** — the "why" behind the code; without it, no one will know
    ```typescript
-   // 风控要求：单日提现不超过 5 万，超过需人工审核
+   // Risk control requirement: daily withdrawal capped at 50,000; manual review required above that
    if (amount > DAILY_WITHDRAW_LIMIT) { ... }
    ```
-3. **非直觉的技术决策** — 绕过、兼容、性能 hack
+3. **Non-obvious technical decisions** — workarounds, compatibility fixes, performance hacks
    ```typescript
-   // antd DatePicker 在 Safari 下 onChange 会触发两次，手动去抖
+   // antd DatePicker fires onChange twice on Safari; manually debounce
    const debouncedOnChange = useMemo(() => debounce(onChange, 0), [onChange]);
    ```
-4. **TODO / FIXME / HACK** — 标记已知的技术债，必须带原因
+4. **TODO / FIXME / HACK** — mark known tech debt; must include a reason
    ```typescript
-   // TODO(2026-Q2): 后端 v2 接口上线后移除此兼容逻辑
-   // FIXME: 并发场景下有竞态问题，暂用 lock 规避
+   // TODO(2026-Q2): remove this compatibility shim once backend v2 API launches
+   // FIXME: race condition under concurrent access; temporarily mitigated with lock
    ```
-5. **正则表达式 / 复杂计算** — 不注释就是谜语
+5. **Regex / complex calculations** — without a comment, it's a riddle
    ```typescript
-   // 匹配中国大陆手机号：1 开头，第二位 3-9，共 11 位
+   // Chinese mainland phone number: starts with 1, second digit 3-9, 11 digits total
    const PHONE_REG = /^1[3-9]\d{9}$/;
    ```
 
-### 禁止写注释的场景
+### When comments are forbidden
 
-1. **复述代码** — 代码已经说清楚了
+1. **Restating the code** — the code already says it
    ```typescript
-   // ❌ 设置用户名
+   // ❌ Set user name
    setUserName(name);
 
-   // ❌ 如果是管理员
+   // ❌ If admin
    if (role === ROLE.ADMIN) { ... }
    ```
-2. **注释掉的代码** — 直接删除，Git 有历史记录
-3. **分隔线注释** — 用函数拆分代替 `// ========= 分割线 =========`
-4. **修改日志** — 不要写 `// 2026-03-30 张三修改了xxx`，用 Git log
+2. **Commented-out code** — delete it; Git has the history
+3. **Divider comments** — split into functions instead of `// ========= divider =========`
+4. **Change logs** — don't write `// 2026-03-30 John changed xxx`; use Git log
 
-### 注释格式
+### Comment format
 
-- 单行用 `//`，与代码之间空一行
-- 多行用 `/** */` JSDoc 风格
-- 中文项目用中文注释，保持一致
-- 注释跟随代码更新，过期注释比没有注释更有害
+- Single-line: use `//`, with a blank line between the comment and the code
+- Multi-line: use `/** */` JSDoc style
+- Keep comment language consistent throughout the project
+- Comments must stay in sync with code; stale comments are worse than no comments
 
-## 组件规范
+## Component Guidelines
 
-- 所有组件使用 TypeScript 函数式组件
-- Props 必须定义 interface 并导出
-- 复杂逻辑抽取到自定义 hooks
-- 组件只负责渲染, 不包含业务逻辑
-- 使用 React.memo 包裹纯展示组件
+- All components must use TypeScript functional components
+- Props must define and export an interface
+- Complex logic must be extracted into custom hooks
+- Components are responsible for rendering only; no business logic inside
+- Wrap pure presentational components with `React.memo`
 
-## API 规范
+## API Guidelines
 
-- 请求统一使用 @umijs/plugin-request (umi-request), 不要引入 axios
-- 全局请求/响应拦截在 workspace/src/app.ts 的 request 配置中定义
-- 请求函数放在 workspace/src/features/[module]/api/ 或 workspace/src/services/ 目录
-- 类型定义与后端 API 文档保持一致
-- 错误码统一处理, 通过 errorHandler 配置
+- Use `@umijs/plugin-request` (umi-request) for all requests; do not introduce axios
+- Define global request/response interceptors in the `request` config in `workspace/src/app.ts`
+- Place request functions under `workspace/src/features/[module]/api/` or `workspace/src/services/`
+- Keep type definitions consistent with the backend API documentation
+- Handle error codes uniformly via the `errorHandler` config
 
-## 状态管理规范
+## State Management Guidelines
 
-- 全局共享状态优先用 @umijs/plugin-model (useModel), 文件放 workspace/src/models/
-- 初始化数据 (用户信息/权限等) 用 getInitialState + useModel('@@initialState')
-- 复杂独立状态用 Zustand, Store 文件以 use 开头 (useAuthStore.ts)
-- 组件局部状态用 useState/useReducer
-- 不要把服务端缓存数据放进全局 store
+- Prefer `@umijs/plugin-model` (useModel) for globally shared state; files go in `workspace/src/models/`
+- Use `getInitialState` + `useModel('@@initialState')` for initialization data (user info, permissions, etc.)
+- Use Zustand for complex, independent state; Store files begin with `use` (useAuthStore.ts)
+- Use `useState`/`useReducer` for component-local state
+- Never put server-cached data into global store
 
-## 路由规范
+## Routing Guidelines
 
-- 优先使用 Umi 约定式路由 (pages/ 目录结构即路由)
-- 需要布局嵌套时使用 _layout.tsx
-- 路由级权限通过 @umijs/plugin-access + wrappers 控制
-- 动态路由使用 [id].tsx 命名约定
+- Prefer Umi convention-based routing (the `pages/` directory structure is the route)
+- Use `_layout.tsx` when layout nesting is needed
+- Control route-level permissions via `@umijs/plugin-access` + `wrappers`
+- Use the `[id].tsx` naming convention for dynamic routes
 
-## Git 规范
+## Git Guidelines
 
-- 提交信息格式: `type(scope): description`
+- Commit message format: `type(scope): description`
 - type: feat | fix | refactor | style | test | docs | chore
-- 分支命名: feature/xxx, fix/xxx, refactor/xxx
+- Branch naming: feature/xxx, fix/xxx, refactor/xxx
