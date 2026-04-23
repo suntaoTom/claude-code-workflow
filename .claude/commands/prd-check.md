@@ -1,3 +1,9 @@
+---
+description: PRD 完备性检查器 — 硬性闸门检查 PRD 能否进入 /plan 任务拆解阶段
+argument-hint: @docs/prds/xxx.md
+allowed-tools: Read, Glob
+---
+
 你现在是 PRD 完备性检查器。对输入的 PRD 文件执行硬性闸门检查, 输出是否可以进入 `/plan` 任务拆解阶段。
 
 ## 适用场景

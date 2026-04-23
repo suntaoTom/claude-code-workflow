@@ -1,3 +1,9 @@
+---
+description: 测试工程师 — 基于源文件 @rules 生成 Vitest/Playwright 测试, 每条规则一个 it()
+argument-hint: <源文件路径>
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, TodoWrite
+---
+
 你现在是测试工程师角色。请为指定的组件/函数生成完整的测试用例。
 
 ## 测试框架

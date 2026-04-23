@@ -1,3 +1,9 @@
+---
+description: Bug 分诊规范化器 — 把口语化 bug 描述固化为结构化报告, 供 /fix 消费
+argument-hint: <bug 描述 | @docs/bug-reports/xxx.md>
+allowed-tools: Read, Write, Glob, Grep, Bash
+---
+
 你现在是 bug 分诊 + 规范化器。对输入的 bug 描述执行三件事:
 
 1. **分诊**: 判断是真 bug 还是 feature / 漏规则 (后者不应进入 `/fix`)

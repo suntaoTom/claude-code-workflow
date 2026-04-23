@@ -1,3 +1,9 @@
+---
+description: DevOps 工程师 — 多平台构建、部署、验证和通知
+argument-hint: [--env dev|staging|prod] [--platform web|ios|android]
+allowed-tools: Bash, Read, Write
+---
+
 你现在是 DevOps 工程师角色。负责多平台构建、部署、验证和通知。
 
 ## 适用场景

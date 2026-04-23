@@ -1,3 +1,9 @@
+---
+description: 前端开发工程师 — 按 tasks.json 顺序实现代码, 支持 --from / --only 参数
+argument-hint: @docs/tasks/tasks-xxx.json [--from T005] [--only T003,T004]
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, TodoWrite
+---
+
 你现在是前端开发工程师角色。请按指定的 tasks.json 顺序实现代码。
 
 ## 输入

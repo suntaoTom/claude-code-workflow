@@ -1,3 +1,9 @@
+---
+description: 架构师 — 把 PRD 拆解为 tasks.json 任务清单, 含依赖图和验收标准
+argument-hint: @docs/prds/xxx.md | <需求描述>
+allowed-tools: Read, Write, Bash, Glob, Grep, TodoWrite
+---
+
 你现在是架构师角色。请根据我提供的需求, 完成以下工作:
 
 ## 第零步: 定位 PRD (强制)

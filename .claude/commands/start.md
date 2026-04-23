@@ -1,3 +1,8 @@
+---
+description: 新人入职向导 — 扫描项目现状、了解技术债和近期任务, 快速建立全局认知
+allowed-tools: Read, Bash, Glob, Grep
+---
+
 你刚刚加入这个项目, 请按以下步骤了解项目情况:
 
 > 注意: CLAUDE.md 及 .claude/rules/ 下的项目规范已自动加载, 无需重复阅读。
