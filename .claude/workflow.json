@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "workflows": {
+    "main": {
+      "name": "主开发流程",
+      "description": "从一句话需求到版本发布的完整流程",
+      "color": "#1677ff",
+      "steps": [
+        {
+          "command": "prd",
+          "type": "action",
+          "label": "写 PRD",
+          "next": ["prd-check"]
+        },
+        {
+          "command": "prd-check",
+          "type": "gate",
+          "label": "PRD 检查",
+          "next": ["plan"]
+        },
+        {
+          "command": "plan",
+          "type": "action",
+          "label": "任务拆解",
+          "next": ["plan-check"]
+        },
+        {
+          "command": "plan-check",
+          "type": "gate",
+          "label": "任务检查",
+          "next": ["code"]
+        },
+        {
+          "command": "code",
+          "type": "action",
+          "label": "编码实现",
+          "next": ["test"]
+        },
+        {
+          "command": "test",
+          "type": "action",
+          "label": "生成测试",
+          "next": ["review"]
+        },
+        {
+          "command": "review",
+          "type": "gate",
+          "label": "代码审查",
+          "next": ["build"]
+        },
+        {
+          "command": "build",
+          "type": "action",
+          "label": "构建",
+          "next": ["deploy"]
+        },
+        {
+          "command": "deploy",
+          "type": "action",
+          "label": "部署",
+          "next": ["release"]
+        },
+        {
+          "command": "release",
+          "type": "action",
+          "label": "发布日志",
+          "next": []
+        }
+      ]
+    },
+    "bugfix": {
+      "name": "Bug 修复流程",
+      "description": "从 bug 描述到修复合并",
+      "color": "#f5222d",
+      "steps": [
+        {
+          "command": "bug-check",
+          "type": "gate",
+          "label": "Bug 分诊",
+          "next": ["fix"]
+        },
+        {
+          "command": "fix",
+          "type": "action",
+          "label": "修复",
+          "next": ["test"],
+          "merge-into": "main"
+        }
+      ]
+    },
+    "utility": {
+      "name": "独立工具",
+      "description": "不依赖其他命令、可随时单独调用的工具",
+      "color": "#722ed1",
+      "steps": [
+        {
+          "command": "start",
+          "type": "action",
+          "label": "项目入职",
+          "next": []
+        },
+        {
+          "command": "meta-audit",
+          "type": "action",
+          "label": "元审计",
+          "next": []
+        }
+      ]
+    }
+  }
+}

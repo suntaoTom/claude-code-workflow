@@ -11,6 +11,7 @@
 | [agents/](agents/) | 子代理定义, 支持并行/独立 context 工作 | 主命令内部 `Agent` 工具 spawn |
 | [hooks/](hooks/) | 自动化钩子脚本, 事件触发 | `settings.json` 里配置的事件 (PostToolUse 等) |
 | [rules/](rules/) | 长期稳定的编码规范, 供 AI 读取 | `CLAUDE.md` 按需引用 |
+| [workflow.json](workflow.json) | 命令工作流拓扑 (顺序/分支/类型), UI 构建依据 | 人工维护, AI/UI 读取 |
 | [settings.json](settings.json) | 共享 hooks 配置 (入 git) | Claude Code 启动时加载 |
 | settings.local.json | 个人权限/环境变量 (gitignore) | 本地生效, 不影响团队 |
 
@@ -21,6 +22,8 @@
 | 场景 | 去哪 |
 |------|-----|
 | 看有哪些斜杠命令 | [commands/](commands/) |
+| 了解命令的执行顺序/流程拓扑 | [workflow.json](workflow.json) |
+| 修改命令之间的前后关系 | 只改 [workflow.json](workflow.json), 命令文件不用动 |
 | 加新的审计/分析类技能 | [skills/README.md](skills/README.md) 参考约定 |
 | 让某些事件自动触发检查 | [hooks/README.md](hooks/README.md) 看怎么加 |
 | 让 AI 遵守某条规范 | [rules/](rules/) 加 md 文件, 在 CLAUDE.md 里引 |
