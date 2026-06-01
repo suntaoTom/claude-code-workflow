@@ -106,7 +106,7 @@ Claude Code 原生支持,有两条可叠加的通道:
 
 ### Notification Hook 推到 IM 的配法(示例:webhook)
 
-在 `settings.json` 加:
+webhook URL 是密钥,放 **`settings.local.json`(本地不入库)**,不要提交。以**飞书自定义机器人**为例(已实测可用):
 
 ```jsonc
 {
@@ -116,7 +116,8 @@ Claude Code 原生支持,有两条可叠加的通道:
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.message' | { read -r msg; curl -s -X POST \"$YOUR_WEBHOOK_URL\" -H 'Content-Type: application/json' -d \"{\\\"text\\\":\\\"Claude 需要你决策: $msg\\\"}\"; } 2>/dev/null || true"
+            "command": "msg=$(jq -r '.message // \"有操作在等你处理\"'); curl -s -X POST \"<飞书webhook>\" -H 'Content-Type: application/json' -d \"$(jq -nc --arg t \"🔔 Claude Code 提醒: $msg\" '{msg_type:\"text\",content:{text:$t}}')\" >/dev/null 2>&1 || true",
+            "timeout": 10
           }
         ]
       }
@@ -125,7 +126,13 @@ Claude Code 原生支持,有两条可叠加的通道:
 }
 ```
 
-`$YOUR_WEBHOOK_URL` 换成飞书/钉钉/企微群机器人或 Bark/ntfy/Telegram 的地址。
+**原理**:`Notification` 事件触发时,harness 把 `{"message":"..."}` 从 stdin 喂给命令 → `jq` 抠出 `.message` → 再用 `jq -nc` 包成飞书要求的 `{msg_type:"text",content:{text:...}}` → `curl` POST 给 webhook。
+
+**注意各家 IM 的 payload 格式不同**:
+- **飞书**:`{"msg_type":"text","content":{"text":"..."}}`(上例)
+- 企微/钉钉:`{"msgtype":"text","text":{"content":"..."}}`
+- Bark/ntfy:直接 GET/POST 纯文本到设备 URL
+- 飞书若开了「自定义关键词」安全设置,消息文字里必须含该关键词(上例含 "Claude")
 
 ### ⚠️ 隐私提醒
 
