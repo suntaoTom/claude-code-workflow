@@ -12,6 +12,17 @@
       "Bash(ls:*)",
       "Bash(mkdir:*)",
       "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(sed:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(diff:*)",
+      "Bash(tree:*)",
       "Bash(node:*)",
       "Bash(npx:*)",
       "Bash(echo:*)",
@@ -23,6 +34,7 @@
     ],
     "deny": [
       "Bash(rm -rf:*)"
-    ]
+    ],
+    "defaultMode": "acceptEdits"
   }
 }

@@ -8,6 +8,7 @@
 docs/
 ├── README.md              ← 你正在看的这个文件
 ├── WORKFLOW.md            ← 八步法工作流手册
+├── PERMISSIONS.md         ← 权限弹窗与免打扰设置 (为什么弹/怎么配/人不在时远程接管)
 ├── ADAPTING.md            ← 跨工种适配清单 (后端/数据/移动/DevOps/... fork 本框架时读这个)
 ├── DECISIONS.md           ← 架构决策记录 (ADR), 框架重大决策的背景/理由
 ├── tasks/                 ← /plan 生成的任务清单
@@ -175,6 +176,14 @@ docs/test-reports/<YYYY-MM-DD-HHmm>-<范围>.md
 - **命名**: `<YYYY-MM-DD>-meta-audit.md`
 
 详见 [retrospectives/README.md](retrospectives/README.md)。
+
+## PERMISSIONS.md
+
+**权限弹窗与免打扰设置**。解决"人离开电脑、流程被 Yes/No 确认框卡死"的高频痛点。讲清:
+
+- **为什么会弹** —— 弹窗的两个来源(AI 自己问 vs harness 权限框),以及为什么"默认 yes"对后者无效
+- **怎么配** —— 权限模式分级(`acceptEdits` / `auto` / `bypassPermissions`)、命令白名单写法、本框架已配的默认值
+- **人不在时远程接管** —— Claude App 推送 / Remote Control / IM Notification Hook 三通道对比与配法
 
 ## DECISIONS.md
 
