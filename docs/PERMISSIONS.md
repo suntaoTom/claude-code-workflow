@@ -98,6 +98,48 @@ Claude Code 原生支持,有两条可叠加的通道:
 | **Remote Control** | `remoteControlAtStartup` / `claude.ai/code` | 会话镜像到 claude.ai,手机上看到弹窗并接管 | **必须同账号** |
 | **IM 推送**(飞书/钉钉/企微/TG/Bark) | **Notification Hook** → webhook | **只通知**,免账号,能进任意群 | **无账号要求,可推给任何人/群** |
 
+### Remote Control 命令详解(`claude --remote-control "项目名"`)
+
+这条命令 = **启动一个开启 Remote Control 的交互式会话,并给它起名**。
+
+| 组成 | 含义 |
+|------|------|
+| `--remote-control` | 本次会话开启 Remote Control:会话镜像到 `claude.ai/code` 与 Claude App 的 **Code** 标签,可在手机/网页远程查看并接管弹窗 |
+| `"项目名"` | **会话名(name)**,不是 prompt、不是项目路径、不是项目名变量。仅作标识,例:`claude --remote-control "my-project"` |
+
+`claude --help` 原文:`--remote-control [name]  Start an interactive session with Remote Control enabled (optionally named)`。
+
+**会话名会出现在**:
+- `claude.ai/code` 的会话列表
+- Claude App 的 **Code** 标签页
+- 本地 `claude --resume` 的恢复列表
+
+**会话名解析优先级**(不传 `[name]` 时):
+1. `--remote-control` 显式传的名
+2. 会话内 `/rename` 设的标题
+3. 对话历史里最后一条有意义的消息
+4. 自动生成(如 `hostname-graceful-unicorn`;前缀可用 `--remote-control-session-name-prefix` 改)
+
+**三种开启入口**(择一):
+- `claude --remote-control "项目名"` — 启动交互会话即开启(本地能敲、手机能控)
+- `/remote-control` — 在**已有会话**里临时开启
+- `claude remote-control` — server 模式(常驻,服务多会话)
+
+**前置条件**:
+- 订阅 Pro / Max / Team / Enterprise(**API key 不支持**)
+- 用 claude.ai 账号登录(`/login`,非 API key)
+- 版本 ≥ 2.1.51
+- Team/Enterprise 需管理员在后台开启 Remote Control 开关
+
+**和 `remoteControlAtStartup` 的关系(重要)**:
+- `true`:**每次** `claude` 启动都自动开远程,会话名自动生成(`hostname-xxx`)。便利,但每个会话都默认镜像到 claude.ai 云端。
+- `false`(本框架默认):平时 `claude` 启动**不自动开**远程、会话不上云;要远程接管时**显式敲** `claude --remote-control "项目名"` 按需开启,并顺便命名会话。
+- 👉 本框架默认 `false`(隐私优先,见 `.claude/settings.local.json`)——把"会话上云"变成显式动作而非默认。涉及敏感代码的项目尤其建议保持 `false`。fork 出去的项目若更看重便利,可自行改 `true`。
+
+**权限不受影响**:远程驱动时,所有权限判定**仍在你本机执行**——`defaultMode`、`allow` 白名单、`deny: rm -rf` 底线完全照旧生效,远程不会绕过任何一条。
+
+**想每次都用同一个会话名又不想手敲**:加 shell 别名(非 settings 配置),例:`alias cc-rc='claude --remote-control "my-project"'`。
+
 ### 两条通道的本质区别
 
 - **"通知"可以无账号、推给任何人**(用 Notification Hook 打 webhook)
