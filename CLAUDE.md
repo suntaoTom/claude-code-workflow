@@ -81,6 +81,19 @@ UmiJS 4 + React 18 + TypeScript 5 + Ant Design 5 (@umijs/max)
 
 ---
 
+## 并发执行（提效，任何命令都适用）
+
+执行**任何命令/任务**时,只要手上有「多个工作单元」(如 `/code` 拆的多个 task、`/test` 写多文件、`/fix` 多 bug),
+**先评估能不能并行**,别一根筋串行做。
+
+- **默认追求并行**:互不依赖(`dependencies` 无边)+ 不写同一文件 + 无顺序推理 → **并行 spawn subagent**(同一条消息发多个 `Agent` 调用)
+- **退回串行**:有依赖链 / 写同一文件 / 需顺序推理 / 任务 < 3 个
+- **共享文件**(README / 路由 / i18n / barrel index / status)永远**主 agent 串行收口**,绝不让多 agent 同时写
+
+完整并发策略 → `.claude/rules/concurrency.md`
+
+---
+
 ## 注意事项
 
 - 不要使用 any 类型，必须明确类型定义

@@ -59,10 +59,27 @@ outputs: ["src/*.ts"]
 
 ## 执行原则
 
-### 按依赖顺序, 不跳步
+### 按依赖顺序执行, 但**独立任务并行**(不是一根筋串到底)
 
-- 严格按 `dependencies` 字段排序, 上游任务 `status` 未变为 `done` 不能跑下游
-- 并行机会: 同一层级 (无依赖关系) 的任务可以在一次会话里连续做, 但每做完一个才改 status
+> 见 [`.claude/rules/concurrency.md`](../rules/concurrency.md)。`tasks.json` 的 `dependencies`
+> 就是依赖图 —— 不要把所有任务排成一条线串行做, 互不依赖、改的不是同一文件的任务**并行 spawn subagent**。
+
+执行策略(开干前先算一次):
+
+1. **拓扑分层** — 按 `dependencies` 把任务排成「层」, 同层内互不依赖(上游全 `done` 才进下一层)。
+2. **层内分组** — 同层里再按 `filePath` 不重叠分组 → 每组可并行。
+   - 例:两个独立模块的 `types` 文件无依赖边、不同文件 → **并行**。
+   - 反例:一条 `types→hook→component→page` 链 → 链内**串行**;但多条独立模块链之间**并行**。
+3. **并行 spawn** — 一层里可并行的任务, **在同一条消息里发多个 `Agent` 调用**, 真并发。
+   每个 subagent **只写自己 task 的源文件**, 回报「要加的 README 行 / i18n key / 路由项 / index 导出」。
+4. **串行收口(主 agent 做, 防冲突)** — 每批并行结束后, 主 agent **统一**:
+   - 写共享文件(目录 README / 路由配置 / i18n locale / barrel `index.ts` / `package.json`)—— **绝不让多 agent 同时写**
+   - 改这批任务的 `status` → `done`
+   - 跑一次 lint + 类型检查兜底
+   - 再进下一层
+5. **失败隔离** — 某个并行 agent 失败 → 不影响同批其他;单独重试或标 `blocked`。
+
+**何时直接串行**(别硬拆, 见 concurrency.md 第六节): 任务 < 3 个 / 文件高度重叠 / 需顺序推理 / 单条线性链。
 
 ### 任务状态机
 
