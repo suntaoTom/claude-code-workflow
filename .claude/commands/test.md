@@ -116,6 +116,7 @@ LoginForm @rules 分诊:
 - 所有 🟢 @rules 都有了对应 `it()` → **停**
 - **不追行覆盖率 %**, 只追「🟢 @rules 覆盖率 100%」
 - 连续 2 个候选都落 🔴 / 🟡 → **停**, 别硬凑
+- 详见 [testing.md「自动化测试边界 — 何时停, 切人工」A 区](../rules/testing.md)
 
 #### 切手动 (🔴 必做, 不可省)
 把所有 🔴 @rule **转成具体人工步骤**, 写入 `docs/test-reports/manual-checklist-{YYYY-MM-DD}.md`
