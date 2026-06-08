@@ -114,12 +114,12 @@ UmiJS 4 + React 18 + TypeScript 5 + Ant Design 5 (@umijs/max)
 
 `.claude/workflow.json` 定义了所有命令的执行顺序与分组关系, 供 UI 渲染工作流图、供 AI 理解命令间依赖：
 
-- **`workflows.main`** — 主开发流程 (10 步): prd → prd-check → plan → plan-check → code → test → review → build → deploy → release
+- **`workflows.main`** — 主开发流程 (11 步): prd → prd-check → plan → plan-check → code → test → review → security-gate → build → deploy → release
 - **`workflows.bugfix`** — Bug 修复支流: bug-check → fix → (汇入 main 的 test)
 - **`workflows.utility`** — 独立工具 (不在主链路): start / meta-audit
 
 字段说明:
-- `type: "gate"` — 校验门禁, 不通过不能进入下一步 (prd-check / plan-check / bug-check / review)
+- `type: "gate"` — 校验门禁, 不通过不能进入下一步 (prd-check / plan-check / bug-check / review / security-gate)
 - `type: "action"` — 执行动作
 - `next` — 后续命令 ID 数组 (空数组表示终点)
 - `merge-into` — 支流在此步后汇入哪个主流程

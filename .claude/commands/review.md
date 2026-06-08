@@ -101,5 +101,37 @@ idx: 5
 
 🔵 Suggestion 条目不参与循环, 由用户决定是否处理。
 
+## 并行编排模式 (可选, 需用户显式 opt-in)
+
+> 起因: [concurrency.md](../rules/concurrency.md) — 审查多个文件本是干净的 fan-out, 串行扫白白浪费并发。
+> 扫描阶段是**只读**的 (找问题), 天然适合并行; 修复循环写共享文件, 必须主 agent 串行收口。
+
+`.claude/workflows/review.js` 把「扫描阶段」落成了 `Workflow` 编排脚本: 按文件 fan-out `code-reviewer`
+并行审查 (7 维度) → 对每条 🔴 Critical 做对抗式复核滤误报 → 汇总结构化结果。**它只读、不改代码。**
+
+### 何时走这个模式
+
+- **仅当用户显式要求**时启用 (`Workflow` 计费 + opt-in): 用户说「用 workflow 跑 /review」「ultracode」
+  「并行审查」, 或审查范围较大 (≥ 5 个 `.ts/.tsx` 文件) 且用户同意火力全开。
+- 否则**沿用上面的默认串行流程** (单 agent 逐维度审查), 小范围 (< 5 文件) 不值得起 Workflow。
+
+### 怎么跑 (主 agent 职责)
+
+1. **先 Glob 出文件清单** (Workflow 脚本不做文件发现, 保持纯读):
+   - `$ARGUMENTS` 是目录 → `Glob` 出该目录下所有 `workspace/src/**/*.{ts,tsx}` (排除 `src/.umi/**` 生成产物与 `*.d.ts`)
+   - `$ARGUMENTS` 是单文件 → 清单即该文件
+2. **调用 Workflow**, 传入 `args = { files: [...清单], target: "<范围描述>" }`。
+   - **必须用 `scriptPath: ".claude/workflows/review.js"` 调用, 不要用 `name: "review"`**:
+     named workflow 注册会**缓存、不热重载**, 改了脚本用 name 调还是跑旧快照 (实测踩过)。`scriptPath` 每次读最新源文件。
+   - `args` 传 JSON 对象; 脚本已容错「对象 or JSON 字符串」两种。
+3. **拿回结构化结果** `{ counts, critical[], warning[], suggestion[] }` 后, **主 agent 串行收口**:
+   - 按上面「## 自动修复 + 循环审查规则」逐条修复 (Critical → Warning), 写文件 + 同步 README + 补测试。
+   - 修复涉及的**共享文件 (README / locales / 路由)** 由主 agent 统一改, 不并发。
+   - 修完跑 `pnpm --prefix workspace lint`, 再按需重审。
+4. **终止条件同默认流程**: Critical + Warning 归零, 或同一问题连续 3 轮未修复则停下问用户。
+
+> 注意: Workflow 脚本对**安全/泄密红线** (token/密钥写前端、XSS) 与 **i18n 硬编码** 从严 (复核不确定一律保留),
+> 避免对抗式复核误删真实安全问题。
+
 请审查以下代码:
 $ARGUMENTS

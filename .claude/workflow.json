@@ -46,6 +46,12 @@
           "command": "review",
           "type": "gate",
           "label": "代码审查",
+          "next": ["security-gate"]
+        },
+        {
+          "command": "security-gate",
+          "type": "gate",
+          "label": "安全门禁 (前端泄密红线)",
           "next": ["build"]
         },
         {
