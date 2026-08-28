@@ -1,221 +1,43 @@
-# 测试规范
+# Java 后端测试规范
 
-> 本文件规定**测试写什么、怎么写**, 不涉及具体执行流程 (那是 `/test` 命令的事)。
+## 测试断言唯一来源
 
-## 核心原则
+业务断言唯一来源是生产 JavaDoc 的 `@rules`，并与 PRD 原文和 task `businessRules` 对照。每条 `@rules` 一个独立测试用例，测试名称完整引用规则原文和编号；不得根据源码现状猜预期。
 
-**测试断言的唯一来源是源文件 JSDoc 的 `@rules`, 不是 AI 读源码的推测**。
+## 测试分层
 
-```
-PRD 业务规则  →  @rules (JSDoc)  →  测试 it() 断言
-    一一对应, 不跳跃, 不扩展
-```
+| 场景 | 工具/位置 |
+|------|-----------|
+| 纯函数、转换、校验 | JUnit 5 + Mockito/AssertJ，镜像 `src/main/java` 包路径 |
+| Controller/HTTP | Spring Boot slice / MockMvc（仅当服务有 HTTP API） |
+| Service/事务 | Spring Boot Test 或隔离单测，验证提交/回滚语义 |
+| DAO/MyBatis-Plus | 数据库集成测试，验证查询、唯一约束、迁移和并发边界 |
+| Redis | 隔离 Redis 集成测试，验证 TTL、Presence、锁和失效 |
+| RabbitMQ | 拓扑、Confirm/Return、Inbox/Outbox、ack、重试、DLQ 集成测试 |
+| WebSocket | Spring Mock WebSocket/真实测试容器，验证握手、消息、心跳、关闭和资源释放 |
+| 契约 | OpenAPI 或 WebSocket/Rabbit 消息 schema 一致性检查 |
 
-违反这条 = 测试会「测试源码现状」而不是「验证业务规则」, 源码有 bug 时测试会跟着错。
+测试目录固定为 `workspace/src/test/java/<base-package>/`，按生产包镜像；测试资源放 `workspace/src/test/resources/`。不创建前端 `workspace/tests`、Vitest、Playwright 或 Testing Library 目录。
 
----
+## WebSocket 必测规则
 
-## 测试工具分工
+根据 PRD/协议实际规则覆盖：身份缺失/无效、用户类型、Origin、连接数、消息大小/频率、Ping/Pong、超时、正常/异常关闭、重复 messageId、显式入站路由和未登记消息处理。不能把跨浏览器、真实网络抖动、负载下吞吐、多节点连接迁移伪装成普通单测。
 
-| 工具 | 用途 | 位置 |
-|------|------|-----|
-| Vitest | 单元测试 / 组件测试 (JSDOM) | `workspace/tests/` 下镜像 `workspace/src/` 的 `<name>.test.ts(x)` |
-| Playwright | E2E 测试 / 真实浏览器交互 | `workspace/tests/e2e/*.spec.ts` |
-| @testing-library/react | 组件渲染 + 用户交互模拟 | 配合 Vitest 使用 |
-| MSW (Mock Service Worker) | 拦截 HTTP 请求 mock | `workspace/tests/mocks/` |
+## RabbitMQ 必测规则
 
-**怎么选**:
+覆盖 messageId/idempotency key/correlationId 语义、Inbox 状态、Outbox 事务关系、Confirm/Return、ack 时机、有限重试、退避、DLQ、消息转换 fatal、旧新契约兼容。真实生产 Broker 故障切换和灾备属于人工/专项环境。
 
-| 场景 | 用什么 |
-|------|-------|
-| 纯函数逻辑 (utils/) | Vitest 单测 |
-| 组件渲染 + 点击/输入 | Vitest + testing-library |
-| 跨组件交互 / 路由跳转 | Vitest + testing-library (仍在 JSDOM 里) |
-| 涉及真实浏览器 API (localStorage/IDB 等) | Vitest (JSDOM 够用) 或 Playwright |
-| 跨页面流程 (登录 → 跳首页 → 下单) | Playwright E2E |
-| 视觉回归 | Playwright screenshot (按需) |
+## 测试失败分诊
 
----
+1. 测试代码错误（fixture、selector、异步等待、测试隔离）→ 修测试。
+2. 环境缺失（JDK、Maven、数据库、Redis、RabbitMQ、Nacos）→ 报告环境，不擅自伪造通过。
+3. 预期与 PRD/@rules 不一致 → 按原文修正测试或请求规则确认。
+4. 源码违反明确规则 → 走 `/fix`，不要在 `/test` 中改生产源码。
 
-## 测试文件位置
+## 自动化边界与停止标准
 
-所有测试**统一放 `workspace/tests/` 下**, 目录结构**镜像** `workspace/src/` 一一对应, 不允许放源文件同目录或 `__tests__/` 子目录。
+🟢 自动化：业务逻辑、DTO 转换、参数校验、错误映射、事务、WebSocket 握手/消息、Rabbit 治理、Redis 状态和配置绑定。
 
-```
-workspace/src/features/login/components/LoginForm.tsx
-workspace/tests/features/login/components/LoginForm.test.tsx   ← 镜像源文件路径
+🔴 转人工或专项环境：真实生产依赖、生产发布/回滚、真实灾备、跨节点 WebSocket 会话、真实负载/网络故障、证书轮换、云网关超时和第三方身份服务。
 
-workspace/src/features/login/hooks/useLogin.ts
-workspace/tests/features/login/hooks/useLogin.test.ts
-
-workspace/src/pages/list/index.tsx
-workspace/tests/pages/list/index.test.tsx
-
-workspace/tests/e2e/login-flow.spec.ts                          ← E2E 单独目录
-workspace/tests/mocks/handlers.ts                               ← MSW handlers 集中
-```
-
-**规则**:
-- 单元/组件测试: `workspace/tests/<src 镜像路径>/<name>.test.ts(x)`
-- E2E 统一放 `workspace/tests/e2e/`, 文件名 `<流程>.spec.ts`
-- MSW handlers 集中在 `workspace/tests/mocks/`, 按模块拆文件
-- 测试文件引用业务代码**一律用 `@/` 别名** (如 `import SearchForm from '@/features/list/components/SearchForm'`), 不要写相对路径 `../../../src/...`
-
-**为什么这么放** (见 `docs/DECISIONS.md` 2026-04-20 条目):
-- `src/` 只放生产代码, 打包 / tsc / 覆盖率扫描无需额外过滤
-- 测试改位置不影响源文件路径稳定性
-- CI 路径统一 `workspace/tests/**`, 单命令跑全量测试
-
----
-
-## Mock 策略
-
-### 优先级: 真 > 假, 少 > 多
-
-能用真的就别 mock (jsdom 自带 localStorage/URL 等 Web API)。能不 mock 就不 mock (函数签名对的就直接跑)。
-
-### 分类
-
-| 场景 | 工具 | 原因 |
-|------|------|-----|
-| HTTP 请求 | **MSW** | 统一拦截网络层, 测试代码不感知 |
-| 第三方模块 (如 `umi`, `antd`) | **不 mock** | 集成测试要测真实行为, mock 掉等于白测 |
-| 项目内部模块 (如工具函数) | **不 mock** | 真跑就好, 除非真的有副作用 |
-| 时间 (new Date / setTimeout) | `vi.useFakeTimers()` | 确定性控制时间 |
-| 随机数 / UUID | `vi.spyOn(Math, 'random')` | 确定性 |
-| window.open / location.href | `vi.stubGlobal()` | JSDOM 对这些支持弱 |
-
-### 禁止
-
-- ❌ 手写 `jest.mock('./xxx')` 整个模块 — 要么用 MSW, 要么真跑
-- ❌ Mock 后又去断言 mock 被调用几次 — 大部分时候这是在测 mock 而不是业务
-- ❌ 为了让测试通过去 mock — 说明测试设计错了, 不是 mock 不够
-
----
-
-## 断言规范
-
-### 每条 `@rules` 一个 `it()`
-
-```typescript
-/**
- * @rules
- *   - R1: 手机号格式不合法时, 搜索按钮禁用
- *   - R2: 所有字段为空时, 搜索按钮禁用
- *   - R3: 重置按钮清空字段后, 自动触发一次查询
- */
-
-// 测试文件
-describe('SearchForm', () => {
-  it('R1: 手机号格式不合法时, 搜索按钮禁用', () => { ... });
-  it('R2: 所有字段为空时, 搜索按钮禁用', () => { ... });
-  it('R3: 重置按钮清空字段后, 自动触发一次查询', () => { ... });
-});
-```
-
-- `it()` 名字**完整引用规则原文**, 带 R1/R2 编号对上
-- 每条规则独立一个 it, 不合并, 不拆碎
-- 断言是规则的**技术化翻译**, 不是规则的改写
-
-### 断言要「用户可见」
-
-```typescript
-// ❌ 测内部实现 (状态名/变量名一变就挂)
-expect(wrapper.instance().state.submitDisabled).toBe(true);
-
-// ✅ 测用户看到的
-expect(screen.getByRole('button', { name: '搜索' })).toBeDisabled();
-```
-
-### 优先级: `getByRole` > `getByLabelText` > `getByText` > `getByTestId`
-
-- 用 role 查询符合 a11y 语义, 写测试顺便检查了 a11y
-- `getByTestId` 是最后兜底, 源码要加 `data-testid`
-
----
-
-## 不要测什么
-
-- ❌ **TypeScript 类型** — tsc 会报错, 不用测
-- ❌ **框架内部行为** — 别测 React 的 useState 有没有触发重渲, 那是 React 的事
-- ❌ **第三方库行为** — 别测 antd Button 点击会不会触发 onClick
-- ❌ **实现细节** — 组件内部用 useState 还是 useReducer 不应该影响测试
-- ❌ **纯样式** — CSS 对不对靠视觉回归或人眼看, 不靠断言
-
----
-
-## 覆盖率目标
-
-**不追求行覆盖率 %, 追求 `@rules` 覆盖率 100%**。
-
-```
-所有 @rules 是否都有对应 it() ← 这是 /test 命令的验收标准
-```
-
-行覆盖率只是副产品:
-- 组件类通常 70-80% 行覆盖率 (分支/边界覆盖是硬仗)
-- 工具函数类应该 ~100% 行覆盖率
-
----
-
-## 自动化测试边界 — 何时停, 切人工 (强制)
-
-> 历史教训: `/test` 一旦没有明确「达标即停」标准, 就会无限延伸 —— 见到「真实后端 / 真实支付 /
-> 视觉 / 动画 / 跨浏览器」类 @rule 也硬写自动化测试, 撞到 jsdom/CI 跑不通的东西就反复重试/扩写,
-> 投入产出比断崖式下降。本节钉死边界。**与 [`/test` 第零点五步「自动化可行性分诊」](../commands/test.md) 配套使用。**
-
-### A. 达标硬标准 (满足全部 → 立刻停止写新自动化测试)
-
-- ☐ 所有源文件 @rules 中**分诊为 🟢** 的, 100% 有对应 `it()`
-- ☐ 关键表单/交互组件的核心交互 (禁用态 / 实时校验错误 / 提交) 有 widget 测试
-- ☐ API 层用 MSW mock 后的「响应 → 状态/UI」处理逻辑有覆盖
-- ☐ `/test` 揪出的 bug 在 commit history 有对应 `fix(...)` 修复
-- ☐ 连续 2 轮跑完整测试套全绿 (避免 flaky case 漏过)
-
-### B. 永远不自动化的 (必须人工 — 不要尝试)
-
-- 🚫 **真实后端 API / 真实下单 / 真实支付** — 产生真数据 / 真扣费 / 脏库
-- 🚫 **真实第三方服务** — OAuth 第三方登录、短信/邮箱验证码、支付网关、真实推送
-- 🚫 **视觉对错** — 像素级布局 / 颜色 / 对齐 / 响应式断点 / 字体 (靠 Visual QA + 人眼, 或 Percy/Chromatic 视觉回归; 终判靠人眼)
-- 🚫 **动画流畅度 / 过渡 / 滚动手感 / 60fps**
-- 🚫 **跨浏览器 / 跨设备一致性** — Safari vs Chrome、移动端真机
-- 🚫 **浏览器原生 / 需真实权限** — 文件上传下载、剪贴板、摄像头、地理位置、桌面通知
-- 🚫 **首屏性能 / Lighthouse / SEO 指标**
-- 🚫 **真实 WebSocket / SSE 长连接**的端到端行为
-
-### C. 切换协议 (达标硬标准全打钩后必须做的)
-
-1. **写人工测试 checklist** — `docs/test-reports/manual-checklist-{YYYY-MM-DD}.md`, 把上方「B. 永远不自动化的」每条转成具体步骤 (例「真机 Safari 打开登录页 → 点第三方登录 → 走完 OAuth 回调 → 看是否落到首页且头像正确」)。
-2. **明确停手** — 把 checklist 交给用户, **不要继续写新的自动化测试**。若用户人工测发现 bug, 走 `/bug-check` → `/fix` 主流程, 而不是绕回来再写自动化兜底。
-
-### D. 在写新自动化测试前的自检
-
-每写一个新 `.test.tsx` 前问自己:
-
-> 「这条用例验证的东西, 是 A 区硬指标还没打钩, 还是 B 区永远手工的领域?」
-
-- A 区还有未打钩 → 写
-- 落 B 区 → **不写**, 加到 manual-checklist
-- 都不是 (重复覆盖 / 无价值 wrapper test) → **不写**, 防 over-engineering
-
----
-
-## 测试失败的分诊
-
-红的时候按这个顺序看, 不要第一反应改源码:
-
-| 失败类型 | 现象 | 处理 |
-|---------|------|-----|
-| **1. 测试代码错** | selector 找不到 / async 未 await | 改测试代码 |
-| **2. 环境缺配置** | 缺 `@testing-library/jest-dom` / 缺 MSW handler | 补环境 |
-| **3. 测试预期错** | AI 之前猜的预期, 和规则对不上 | 改预期 (对照 @rules 原文) |
-| **4. 源码真有 bug** | 规则要求 X, 代码做了 Y | **改源码** (这时才动) |
-
-80% 的红是 1-3, 不是 4。
-
----
-
-## 和其他规则的关系
-
-- 禁止硬编码 ([no-hardcode.md](no-hardcode.md)): 测试文件同样适用, 不要硬编文案 (用 i18n key 或 constants)
-- 文件说明规范 ([file-docs.md](file-docs.md)): `.test.ts(x)` 也要有文件头 JSDoc, `@rules` 可省略 (测试本身不承载业务规则, 断言来源是被测文件的 @rules)
+达到以下全部条件即停止新增自动化：所有可自动化 `@rules` 100% 覆盖；WebSocket/RabbitMQ/数据库关键规则至少有对应集成测试；完整 Maven 测试连续两轮通过；不可自动化规则已进入 `docs/test-reports/manual-checklist-YYYY-MM-DD.md`。

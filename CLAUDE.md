@@ -1,150 +1,97 @@
-# 项目配置 - AI 前端自动化知识库
+# 项目配置 - AI Java 后端自动化工作流
 
-> Claude Code 入职培训。详细规则拆分在 `.claude/rules/` 下，按需读取。
-> 遇到具体场景时，先读对应规则文件再执行。
+> Claude Code 入职培训。详细规则拆分在 `.claude/rules/` 下，按需读取；先确认上游 PRD、协议和部署约束，再执行对应命令。
 
----
+## 项目定位
 
-## 项目结构
-
-本项目分两层:
+本仓库维护的是一套**面向 Java 后端团队的 SDLC 工作流**，不是业务服务源码。参考项目 `/Users/sundaotao/Desktop/web3/backend/microboot-service-websocket` 仅作为技术背景，不是本仓库依赖，不复制源码、不建立 submodule/软链接、不绑定为 `workspace/`。
 
 | 层级 | 目录 | 职责 |
 |------|------|------|
-| **根目录** | `.claude/` / `docs/` / `CLAUDE.md` | AI 自动化框架 (命令/规则/PRD/任务) |
-| **workspace/** | `workspace/src/` / `workspace/config/` / ... | 实际前端项目 (UmiJS 工程) |
+| 框架层 | `.claude/` / `docs/` / `CLAUDE.md` | 命令、规则、代理、hooks、PRD、任务与验证报告 |
+| 目标工程 | `workspace/` | 用户后续接入的 Java/Maven 服务；本次不生成示例服务 |
 
-根目录的 `pnpm dev` / `pnpm gen:api` 等命令会自动代理到 `workspace/` 执行, 用户无需手动 cd。
+## P0 配置与安全边界
 
----
+所有会随环境、租户、部署或协议变化的值必须通过 Spring 配置、环境变量、Secret、集中常量或协议契约提供，禁止硬编码。密码、Token、私钥、连接串、完整业务 Payload 和 PII 不得进入源码、日志、测试 fixture、PRD 或提交内容。
 
-## P0 禁止硬编码（最高优先级）
+详见 `.claude/rules/no-hardcode.md`、`.claude/rules/security.md` 与 `.claude/rules/reliability.md`。
 
-一切可变值通过配置/常量/Design Token/国际化引入，严禁写死。配置本身不得重复，按层级复用。
-涵盖：文案国际化、颜色样式、API 端点、业务枚举、尺寸间距、魔法数字。
+## 技术栈基线
 
-详细规则与示例 → `.claude/rules/no-hardcode.md`
+以参考 WebSocket 服务核实的技术背景为默认语境：
 
----
+- Java 21；Maven 3.9.9；Spring Boot 3.2.12
+- Spring Cloud 2023.0.6；Spring Cloud Alibaba 2023.0.3.4
+- Nacos Config/Discovery；Spring Cloud LoadBalancer
+- 原生 Spring WebSocket：`@EnableWebSocket` + `TextWebSocketHandler`，非 STOMP/SockJS
+- Spring AMQP + RabbitMQ；Publisher Confirm/Return；Inbox/Outbox、重试与 DLQ
+- Redis `StringRedisTemplate`；MyBatis-Plus；Actuator；Micrometer；OpenTelemetry
+- JUnit 5、Mockito、AssertJ、Spring Boot Test；Spotless；Docker 分层 Spring Boot Jar；Liberica JDK 21
+- CI 默认同时支持 GitLab CI（参考项目使用共享 Java GitOps 模板）和 GitHub Actions；同一环境只能有一个部署入口生效
 
-## 技术栈概要
+参考项目的 `pom.xml:6` 与 `README.md:22` 对 `micro-parent` 版本范围存在冲突；除非用户确认并完成 effective POM 验证，任何文档都只能标记为待确认。
 
-UmiJS 4 + React 18 + TypeScript 5 + Ant Design 5 (@umijs/max)
+## 编码概要
 
-- 路由: Umi 约定式路由 | 请求: @umijs/plugin-request | 状态: useModel + Zustand
-- 构建: Umi + Vite 模式 | 规范: @umijs/lint | 包管理: pnpm
-- 不要安装 Umi 已内置的依赖 (axios / react-router-dom / webpack 等)
+- 遵循 Alibaba Java Coding Guidelines；类/接口/枚举 UpperCamelCase，方法/变量 lowerCamelCase，常量 UPPER_SNAKE_CASE
+- 构造器注入；Controller、Service、DAO、Infra 职责清晰，依赖方向单向
+- DTO/Form/BO/DO/VO 按边界使用；外部 DTO 不直接映射数据库 DO，DO 不直接作为 API VO
+- 配置使用 `@ConfigurationProperties`/Spring profile/外部配置；不在业务代码硬编码环境值
+- 异常保留 cause；日志使用 SLF4J 参数占位符并脱敏；不使用 `System.out`/`printStackTrace`
+- 每个 Java 源文件必须有 JavaDoc 追溯锚点；每次修改代码同步维护目录 README
+- Git 提交格式沿用 `type(scope): description`；保护分支通过 MR/PR 合并
 
-完整技术栈与项目结构 → `.claude/rules/tech-stack.md`
+详见 `.claude/rules/coding-style.md`、`.claude/rules/file-docs.md`。
 
----
+## 测试概要
 
-## 编码规范概要
+- 业务断言唯一来源是源文件 JavaDoc 的 `@rules`，每条规则对应独立测试用例
+- 单元测试优先；需要 Spring 容器、数据库、Redis、RabbitMQ 或 WebSocket 时使用对应集成测试
+- 测试目录按生产包镜像：`src/test/java/<base-package>/`
+- 不伪造真实生产基础设施、负载、多节点故障、跨网络行为或生产发布结果；不可自动化事项写入人工 checklist
+- 测试失败按“测试代码 → 环境 → 预期 → 源码”分诊，源码是最后才怀疑的对象
 
-- 注释只写"为什么"，不复述代码；文件头 JSDoc 必写，注释掉的代码直接删
-- 组件 PascalCase / hooks use 前缀 / 常量 UPPER_SNAKE_CASE / 类型不加 I 前缀
-- 函数式组件 + Props interface 导出 + 逻辑抽 hooks + 组件只负责渲染
-- 请求用 umi-request，拦截器在 app.ts，不用 axios
-- 状态: useModel 优先 → Zustand 兜底 → 服务端数据不进 store
-- 路由: 约定式优先，权限用 @umijs/plugin-access + wrappers
-- Git: `type(scope): description`，分支 feature/fix/refactor
+详见 `.claude/rules/testing.md`。
 
-完整编码规范 → `.claude/rules/coding-style.md`
+## 工作流拓扑
 
----
+`.claude/workflow.json` 定义唯一拓扑：
 
-## 文件说明规范（必须遵守）
+`/prd → /prd-check → /plan → /plan-check → /code → /test → /review → /security-gate → /build → /deploy → /release`
 
-每次创建/修改代码文件时，必须同步维护：
+Bug 支流：`/bug-check → /fix → /test`。独立工具：`/start`、`/meta-audit`。
 
-1. 所在目录的 `README.md`（文件清单表格）
-2. 文件顶部 JSDoc 注释（@description / @module / @dependencies / **@prd / @task / @design / @rules**）
-3. 功能模块的模块级 `README.md`（业务流程 + 对外暴露）
-4. `workspace/src/README.md` 全局索引
+`gate` 不通过不能进入下一步；任务状态为 `pending → in-progress → done/blocked`；共享 README、配置、协议、任务状态和 CI 入口由主 agent 串行收口。
 
-> **业务锚点 (@prd / @task / @design / @rules) 是「需求 → 设计 → 代码 → 测试」可追溯链的关键**, 让 `/test` 能根据业务规则而非源码行为生成测试, `/review` 能对照设计稿检查视觉一致性。详见 `.claude/rules/file-docs.md`。
+## 目录约定
 
-详细格式与模板 → `.claude/rules/file-docs.md`
+目标 Java 工程接入后采用 Maven 标准布局：
 
----
+```text
+workspace/
+├── pom.xml
+├── src/main/java/<base-package>/
+│   ├── controller/ service/ dao/ domain/ infra/ config/
+│   └── package-info.java
+├── src/main/resources/
+│   ├── application.yml
+│   └── application-<profile>.yml
+├── src/test/java/<base-package>/
+├── src/test/resources/
+├── Dockerfile
+└── docs/
+```
 
-## 测试规范概要
+本仓库当前不假设 `workspace/` 已是可运行服务；不得因缺少业务需求而自行创建 Java 生产代码。
 
-- 测试断言的**唯一来源**是源文件 JSDoc 的 `@rules`, 不是 AI 推测
-- 每条 `@rules` 一个 `it()`, `it` 名字完整引用规则原文
-- 断言查询优先级: `getByRole` > `getByLabelText` > `getByText` > `getByTestId`
-- Mock 策略: HTTP 用 MSW, 项目内部模块不 mock, 不断言 mock 调用次数
-- 位置: 全部测试统一放 `workspace/tests/` 下, 镜像 `workspace/src/` 结构 (如 `workspace/tests/features/login/components/LoginForm.test.tsx`); E2E 放 `workspace/tests/e2e/`
-- 测试失败分诊顺序: 测试代码 → 环境 → 测试预期 → 源码 (源码是最后才怀疑的)
+## 文档与追溯
 
-完整测试规范 → `.claude/rules/testing.md`
+- `docs/prds/`：后端能力/API/消息需求书
+- `docs/tasks/`：`/plan` 生成的任务清单
+- `docs/bug-reports/`：规范化缺陷报告
+- `docs/test-reports/`：自动化结果与人工 checklist
+- `docs/retrospectives/`：不可变元审计报告
+- `docs/DECISIONS.md`：架构与流程 ADR
 
----
-
-## 并发执行（提效，任何命令都适用）
-
-执行**任何命令/任务**时,只要手上有「多个工作单元」(如 `/code` 拆的多个 task、`/test` 写多文件、`/fix` 多 bug),
-**先评估能不能并行**,别一根筋串行做。
-
-- **默认追求并行**:互不依赖(`dependencies` 无边)+ 不写同一文件 + 无顺序推理 → **并行 spawn subagent**(同一条消息发多个 `Agent` 调用)
-- **退回串行**:有依赖链 / 写同一文件 / 需顺序推理 / 任务 < 3 个
-- **共享文件**(README / 路由 / i18n / barrel index / status)永远**主 agent 串行收口**,绝不让多 agent 同时写
-
-完整并发策略 → `.claude/rules/concurrency.md`
-
----
-
-## 注意事项
-
-- 不要使用 any 类型，必须明确类型定义
-- 不要使用 inline style，用 CSS Modules 或 Ant Design 组件样式
-- 图片资源放在 workspace/public/images/
-- 环境变量以 UMI*APP* 开头
-- 所有异步操作必须有 loading 和 error 状态处理
-- 表单必须有验证和错误提示（antd Form 内置验证）
-- 列表页必须处理空状态（antd Empty）
-- 页面组件放 workspace/src/pages/，业务逻辑放 workspace/src/features/，不要混在一起
-- mock 数据放 workspace/mock/ 目录，使用 Umi 内置 mock 功能
-
----
-
-## 项目工作流文档
-
-### 命令工作流拓扑
-
-`.claude/workflow.json` 定义了所有命令的执行顺序与分组关系, 供 UI 渲染工作流图、供 AI 理解命令间依赖：
-
-- **`workflows.main`** — 主开发流程 (11 步): prd → prd-check → plan → plan-check → code → test → review → security-gate → build → deploy → release
-- **`workflows.bugfix`** — Bug 修复支流: bug-check → fix → (汇入 main 的 test)
-- **`workflows.utility`** — 独立工具 (不在主链路): start / meta-audit
-
-字段说明:
-- `type: "gate"` — 校验门禁, 不通过不能进入下一步 (prd-check / plan-check / bug-check / review / security-gate)
-- `type: "action"` — 执行动作
-- `next` — 后续命令 ID 数组 (空数组表示终点)
-- `merge-into` — 支流在此步后汇入哪个主流程
-
-> 调整命令执行顺序或新增分支时, **只修改 `.claude/workflow.json`**, 命令文件本身不需要改动。
-
----
-
-### docs/ 目录结构
-
-- docs/WORKFLOW.md — **新人/用户必读**, 从一句话需求到上线的八步法操作手册
-- docs/tasks/ — 存放 /plan 命令生成的 JSON 任务清单, 每个文件对应一个功能模块
-- docs/prds/ — 存放产品需求文档 (.md 格式), 模板见 docs/prds/_template.md
-- workspace/api-spec/ — OpenAPI 契约文件 (后端提供), 通过 `pnpm gen:api` 生成 workspace/src/types/api.ts
-- 详细说明见 docs/README.md 和 workspace/api-spec/README.md
-
-### API 类型铁律
-
-- API 类型**必须**从 `@/types/api` 导入, **禁止**手写 request/response 类型
-- `workspace/src/types/api.ts` 是 `pnpm gen:api` 生成的产物, 不要手改
-- OpenAPI 字段不对要推后端改 `workspace/api-spec/openapi.json`, 不要前端绕过
-
-### 任务清单使用方式
-
-- 编码前先读取对应的任务清单: @docs/tasks/tasks-xxx.json
-- 按 taskId 顺序和 dependencies 依赖关系执行任务
-- 每完成一个任务, 将其 status 更新为 "done"
-- status 取值: pending (待开发) | in-progress (开发中) | done (已完成) | blocked (被阻塞)
+每个产出物通过 `@prd`、`@task`、`@api`、`@rules` 形成需求 → 任务 → Java 代码 → 测试的可追溯链。

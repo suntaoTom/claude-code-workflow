@@ -1,0 +1,65 @@
+# Java Deploy（GitHub Actions）
+name: Java Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署环境'
+        required: true
+        type: choice
+        options: [staging, production]
+      version:
+        description: 'artifact/image 版本'
+        required: true
+        type: string
+      platform:
+        description: '部署目标由仓库环境变量定义'
+        required: true
+        type: choice
+        options: [container, kubernetes, vm]
+        default: container
+
+concurrency:
+  group: java-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    if: ${{ hashFiles('workspace/pom.xml', 'pom.xml') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Verify and package
+        working-directory: workspace
+        run: |
+          mvn -B -ntp validate spotless:check test verify package
+          sha256sum target/*.jar
+      - name: Build image
+        run: docker build --tag "${{ vars.IMAGE_NAME }}:${{ inputs.version }}" workspace
+      - name: Verify image metadata
+        run: docker image inspect "${{ vars.IMAGE_NAME }}:${{ inputs.version }}" --format '{{.Id}}'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Deployment handoff
+        run: |
+          echo "Artifact built from $GITHUB_SHA"
+          echo "Target platform: ${{ inputs.platform }}"
+          echo "Configure the repository environment with the approved deploy command."
+      - name: Health verification contract
+        run: |
+          echo "Required checks: /actuator/health, readiness, critical API, WebSocket /ws"
+          echo "No deployment or rollback is performed by this placeholder job."

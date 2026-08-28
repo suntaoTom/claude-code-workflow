@@ -9,9 +9,7 @@
 ## 流程
 
 ```
-产品的 登录需求.docx
-    ↓  pnpm prd:import 登录需求.docx
-docs/prds/_imports/登录需求-2026-04-20.md   ← 原文翻译, 保留在这里以便追溯
+非 Markdown 文件需由用户先导出 Markdown，或在目标工程/独立工具中配置转换器；本仓库当前不提供 `pnpm prd:import` 入口。
     ↓  /prd @docs/prds/_imports/登录需求-2026-04-20.md
 docs/prds/login.md                          ← 最终 PRD (走澄清 + 模板)
 ```

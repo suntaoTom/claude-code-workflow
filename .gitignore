@@ -1,36 +1,33 @@
 # Dependencies
-workspace/node_modules/
 node_modules/
+workspace/node_modules/
 .pnpm-store/
 
-# Build output
-dist/
-.umi/
-.umi-production/
+# Java / Maven build output
+target/
+workspace/target/
+.mvn/timing.properties
 
-# Environment
+# Runtime and local configuration
 .env
-.env.local
-.env.*.local
+.env.*
+application-local.yml
+workspace/src/main/resources/application-local.yml
+*.pem
+*.key
 
-# OS files
-.DS_Store
-Thumbs.db
+# Docker / generated reports
+coverage/
+workspace/build/
+*.log
 
 # Claude Code local settings
 .claude/settings.local.json
 
-# IDE
+# OS / IDE
+.DS_Store
+Thumbs.db
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# Logs
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Test coverage
-coverage/

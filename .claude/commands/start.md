@@ -1,48 +1,20 @@
 ---
-description: 新人入职向导 — 扫描项目现状、了解技术债和近期任务, 快速建立全局认知
+description: Java 后端项目入职向导 — 扫描 Maven、模块、配置、依赖和任务状态
 allowed-tools: Read, Bash, Glob, Grep
 helper: true
 ---
 
-你刚刚加入这个项目, 请按以下步骤了解项目情况:
+你刚加入 Java 后端项目，请只读完成入职扫描，不主动编码。
 
-> 注意: CLAUDE.md 及 .claude/rules/ 下的项目规范已自动加载, 无需重复阅读。
+## 扫描范围
 
-## 第一步: 了解项目现状
+1. `workspace/pom.xml`：Java/Maven/Spring/Starter/插件/私有仓库和 profile。
+2. `src/main/java`：包结构、Controller/Service/DAO/Domain/Infra/Config、入口和依赖方向。
+3. `src/main/resources`：application/profile/Nacos、WebSocket、RabbitMQ、Redis、Actuator；只报告配置键，不输出 Secret 值。
+4. `src/test/java` 与 `src/test/resources`：JUnit、Spring Boot、数据库/Redis/RabbitMQ/WebSocket/契约/集成测试。
+5. Docker、GitLab/GitHub CI、部署/运行文档；确认构建、健康检查、`/ws` smoke test 和外部依赖。
+6. `docs/tasks/*.json`：按模块汇总 pending/in-progress/done/blocked，检查依赖和最近状态。
 
-1. 扫描 workspace/src/ 目录结构, 了解已有的代码模块和文件布局
-2. 检查 workspace/package.json 确认已安装的依赖和可用脚本
-3. 检查 workspace/config/ 目录了解项目配置 (路由/主题/代理等)
+## 输出
 
-## 第二步: 检查当前任务进度
-
-请扫描 docs/tasks/ 目录下所有 JSON 文件, 汇总输出:
-
-1. **进行中的模块**: 列出所有包含非 done 任务的模块
-2. **待办任务**: 列出所有 status 为 pending 或 in-progress 的任务, 按模块分组
-3. **已完成**: 统计已完成任务数 / 总任务数
-
-输出格式:
-```
-📋 项目当前状态
-━━━━━━━━━━━━━━
-
-[模块名1] (3/5 已完成)
-  ✅ T001 - userApi (done)
-  ✅ T002 - useUserStore (done)
-  ✅ T003 - UserTable (done)
-  ⏳ T004 - UserForm (in-progress)
-  ⬜ T005 - UserPage (pending, 依赖 T004)
-
-[模块名2] (0/3 已完成)
-  ⬜ T001 - orderApi (pending)
-  ⬜ T002 - useOrderStore (pending, 依赖 T001)
-  ⬜ T003 - OrderList (pending, 依赖 T002)
-
-━━━━━━━━━━━━━━
-总计: X 个模块, Y/Z 任务已完成
-```
-
-## 第三步: 等待指令
-
-汇报完成后, 等待我的下一步指令。不要主动开始编码。
+报告技术栈、模块边界、配置入口、运行命令、测试命令、外部依赖、风险（包括单实例/粘性路由和版本冲突）以及任务统计。当前仓库未初始化 workspace Java 服务时，明确说明这一点并等待后续指令。

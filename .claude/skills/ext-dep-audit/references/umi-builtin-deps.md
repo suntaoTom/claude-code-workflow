@@ -1,56 +1,14 @@
-# Umi 内置依赖清单
+# Maven 依赖审计参考
 
-> 以下依赖由 `@umijs/max` 或 Umi 插件生态内置提供, **项目不应显式安装**。
-> 显式安装会导致版本不一致、bundle 重复打包、插件拿不到正确实例等问题。
+## 必查
 
-## 请求
+- Spring Boot/Cloud/Alibaba 与 parent/BOM 版本是否对齐。
+- 直接依赖和传递依赖是否重复、多版本共存或来自不可信仓库。
+- RabbitMQ、Redis、数据库驱动、序列化和 WebSocket 组件的 CVE、维护状态和许可证。
+- 测试依赖 scope 是否正确，生产镜像是否误打入测试依赖。
+- 私有 Maven 仓库认证是否来自 CI Secret，不写入 POM。
+- `micro-parent` 动态版本范围是否导致不可复现构建；先用 effective POM 记录真实版本。
 
-| 包名 | 替代方案 |
-|------|---------|
-| axios | 用 `request` from `@umijs/max` (基于 umi-request) |
+## 修复边界
 
-## 路由
-
-| 包名 | 替代方案 |
-|------|---------|
-| react-router | Umi 内置约定式路由 |
-| react-router-dom | `history` / `useNavigate` from `@umijs/max` |
-
-## 构建工具
-
-| 包名 | 替代方案 |
-|------|---------|
-| webpack | Umi 已内置 (config.ts 的 `mfsu` / chainWebpack) |
-| vite | Umi 已内置 Vite 模式 (config.ts 的 `vite: {}`) |
-
-## 代码规范
-
-| 包名 | 替代方案 |
-|------|---------|
-| eslint | 用 `@umijs/lint` |
-| prettier | 用 `@umijs/lint` |
-| stylelint | 用 `@umijs/lint` |
-
-## UI
-
-| 包名 | 替代方案 |
-|------|---------|
-| antd | 通过 `@umijs/max` 集成, 从 `antd` 正常 import 即可 (不需要显式装) |
-| @ant-design/icons | 已随 antd 一并提供 |
-
-## 状态管理
-
-| 包名 | 替代方案 |
-|------|---------|
-| - | Umi 自带 `@umijs/plugin-model` (useModel), 复杂场景才装 Zustand |
-
-## 国际化
-
-| 包名 | 替代方案 |
-|------|---------|
-| react-intl | 用 `@umijs/plugin-locale` (基于 react-intl 封装) |
-
-## 如何验证
-
-运行 `pnpm ls --depth 1 | grep <包名>` 查看实际依赖来源。
-如果是从 `@umijs/max` 传递依赖, 就不需要自己装。
+安全高危漏洞应升级或隔离；破坏性 major/parent/框架切换必须评估兼容性并走 PRD/ADR。没有 `workspace/pom.xml` 时只报告“待目标工程接入”，不得把工作流仓库当作可构建服务。

@@ -1,151 +1,30 @@
-# 性能审计 checklist
+# Java 后端性能审计清单
 
-> AI 读源码时按这个清单逐项检查, 命中即输出。
+## JVM 与线程
 
-## 1. 包体积
+- 是否有可观测的堆、GC、线程、连接池和执行耗时；不要用无基准的“应该更快”。
+- 阻塞 I/O 是否占用关键线程；虚拟线程启用是否与依赖库兼容。
+- 定时任务、心跳 sweep、重试 worker 是否有固定上限和资源释放。
 
-### 整库 import
-```typescript
-// ❌ import _ from 'lodash'   → 打进整个 lodash (~70KB)
-// ✅ import get from 'lodash/get'
-// ✅ import { get } from 'lodash-es'  (配合 tree shake)
-```
+## 数据库与缓存
 
-### 常见体积杀手
+- 查询是否命中索引、是否 N+1、是否无界分页或过宽事务。
+- Redis 是否出现热点 key、无 TTL、重复往返、锁等待或大对象序列化。
+- Inbox/Outbox 查询和唯一约束是否有索引；Relay 扫描是否会重复领取。
 
-| 包 | 大小 | 替代方案 |
-|----|------|---------|
-| moment | 290KB | dayjs (7KB) |
-| lodash (整包) | 70KB | lodash-es + tree shake 或单个 import |
-| antd (整包) | - | 按需 import 已由 @umijs/max 自动处理, 确认 import 语句是 `from 'antd'` |
-| @ant-design/icons (整包) | 900KB | 单个 import: `from '@ant-design/icons/lib/icons/PlusOutlined'` |
-| echarts (整包) | 1MB | `echarts/core` + 按需 register |
-| crypto-js | 200KB | 用原生 WebCrypto API |
+## RabbitMQ
 
-### 重复依赖
-- 同功能多个库: moment + dayjs, axios + umi-request, lodash + ramda
-- 使用 `pnpm ls <包名>` 查是否有多版本
+- 消费并发与队列容量是否匹配；通知与 RPC 是否互相阻塞。
+- ack、Confirm/Return、重试和 DLQ 是否产生重试风暴、重复副作用或无限回流。
+- Payload 大小、序列化和日志是否拖慢消费者。
 
-### 未懒加载
-- 路由级 `dynamic(() => import('./Page'))`
-- 大组件 (Chart / RichEditor / Map) 懒加载
-- 非首屏 modal 懒加载
+## WebSocket
 
-### 开发代码混入
-- `console.log` / `console.debug`
-- 测试工具如 `why-did-you-render`
+- Session 广播复杂度、连接数、心跳 sweep 和断开清理是否可测量。
+- 消息大小/频率、单用户连接上限和多实例粘性路由是否与容量模型一致。
+- 临时 reply route 的本机内存边界、过期清理和高峰行为是否有指标。
 
-## 2. 渲染性能
+## API 与观测
 
-### 缺 memo
-```typescript
-// ❌ 纯展示组件, 每次父组件 render 都重渲
-export function UserCard({ user }: Props) { ... }
-
-// ✅
-export const UserCard = React.memo(function UserCard({ user }: Props) { ... });
-```
-
-### 无 key / index 作 key
-```typescript
-// ❌ items.map((item, i) => <Row key={i} ... />)
-// ✅ items.map(item => <Row key={item.id} ... />)
-```
-
-### 渲染路径新建引用
-```typescript
-// ❌ 每次渲染新建 style 对象
-<Button style={{ marginLeft: 8 }} onClick={() => handle(id)} />
-
-// ✅ 提升到外部常量或 useCallback
-const BTN_STYLE = { marginLeft: 8 };
-const handleClick = useCallback(() => handle(id), [id]);
-```
-
-### 状态提升过高
-- 大列表里单个 item 的编辑态放 item 组件里, 不要放父组件
-- 表单单个字段的值放字段组件里, 不要全塞父组件
-
-### JS 做 CSS 的事
-- 动画用 CSS transition, 不用 setInterval
-- 显隐用 CSS `display` / `visibility`, 不用卸载组件
-
-## 3. 网络性能
-
-### 串行可并行
-```typescript
-// ❌
-const user = await getUser();
-const posts = await getPosts();
-
-// ✅
-const [user, posts] = await Promise.all([getUser(), getPosts()]);
-```
-
-### 缺请求缓存/去重
-- 用 umi-request 的 useRequest hook 自带 cache
-- 相同参数短时间内重复请求要去重
-
-### 图片优化
-- 格式: 优先 WebP, 回落 JPG
-- 响应式: 用 `srcset` + `sizes`
-- 懒加载: `loading="lazy"`
-- 首屏关键图: `<link rel="preload" as="image">`
-
-### 资源预加载
-```html
-<link rel="prefetch" href="/api/user/current">  <!-- 下一页面可能需要 -->
-<link rel="preload" href="/fonts/xxx.woff2" as="font" crossorigin>  <!-- 关键字体 -->
-```
-
-## 4. 内存
-
-### useEffect 缺 cleanup
-```typescript
-// ❌
-useEffect(() => {
-  window.addEventListener('scroll', handler);
-}, []);
-
-// ✅
-useEffect(() => {
-  window.addEventListener('scroll', handler);
-  return () => window.removeEventListener('scroll', handler);
-}, []);
-```
-
-必查的 cleanup 场景:
-- 事件监听 (addEventListener)
-- 定时器 (setInterval / setTimeout)
-- 订阅 (WebSocket / EventSource)
-- RAF (requestAnimationFrame)
-- IntersectionObserver / ResizeObserver / MutationObserver
-
-### 闭包持有大对象
-- 避免在 useCallback/useMemo 的依赖里捕获整个大 state, 只捕获用到的字段
-
-### 无虚拟滚动
-- 列表 > 100 条用 react-window / react-virtualized
-- antd Table 大数据开 `virtual`
-
-## 5. 首屏
-
-### 阻塞关键路径
-- 别在 App 根节点同步请求非必要数据
-- 权限/用户信息用 `getInitialState`, 不要在每个页面各自请求
-
-### 缺 Skeleton / Suspense
-- 首屏 loading 用 antd Skeleton, 不要空白
-- 路由级 lazy 加载用 `<Suspense fallback={<Skeleton />}>`
-
-### 瀑布流请求
-```typescript
-// ❌ 串行但不依赖
-const a = await getA();   // 200ms
-const b = await getB();   // 200ms, 不依赖 a
-// 总耗时 400ms
-
-// ✅
-const [a, b] = await Promise.all([getA(), getB()]);
-// 总耗时 200ms
-```
+- 使用 P50/P95/P99、吞吐、错误率、积压、连接数和资源利用率建立基线。
+- 优化必须附测量命令、基线、目标和回归测试；无测量只列“待验证”。

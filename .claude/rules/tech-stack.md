@@ -1,75 +1,73 @@
-# 技术栈与 Umi 约定
+# Java 后端技术栈与工程约定
 
-## 技术栈
+## 技术基线
 
-- 框架: UmiJS 4.x + React 18 + TypeScript 5.x
-- UI 组件库: Ant Design 5.x (通过 @umijs/max 集成)
-- 状态管理: @umijs/plugin-model (轻量场景) / Zustand (复杂场景)
-- 路由: Umi 约定式路由 (基于文件系统自动生成)
-- 请求: @umijs/plugin-request (内置 umi-request, 基于 fetch)
-- 数据流: @umijs/plugin-initial-state + useModel
-- 构建工具: Umi Vite 模式 (workspace/config/config.ts 中配置 vite: {})
-- 测试: Vitest + Playwright
-- 代码规范: @umijs/lint (内置 ESLint + Prettier + Stylelint)
-- 包管理: pnpm
-- 国际化: @umijs/plugin-locale (按需启用)
+以参考项目 `microboot-service-websocket` 已核实的公开工程事实为默认背景；具体业务服务仍以自身 POM、协议和 ADR 为准：
 
-## 项目结构
+- Java 21、Maven 3.9.9
+- Spring Boot 3.2.12、Spring Cloud 2023.0.6、Spring Cloud Alibaba 2023.0.3.4
+- Nacos Config/Discovery、Spring Cloud LoadBalancer
+- Spring 原生 WebSocket：`@EnableWebSocket`、`TextWebSocketHandler`，非 STOMP/SockJS；参考握手路径 `/ws`
+- Spring AMQP/RabbitMQ：Publisher Confirm/Return、Inbox/Outbox、Retry、DLQ/DLX
+- Redis `StringRedisTemplate`；MyBatis-Plus；Flyway 能力以公共 starter/服务配置为准
+- Spring Boot Actuator、Micrometer、OpenTelemetry
+- JUnit 5、Mockito、AssertJ、Spring Boot Test；Spotless
+- Docker 分层 Spring Boot Jar、Liberica JDK 21；GitLab CI + GitHub Actions 双入口可用
 
-```
-workspace/                   # 前端项目根 (UmiJS 工程)
-├── config/
-│   ├── config.ts            # Umi 主配置
-│   ├── routes.ts            # 路由配置 (如不用约定式路由)
-│   ├── proxy.ts             # 开发环境代理配置
-│   └── theme.ts             # Ant Design 主题定制
-├── src/
-│   ├── pages/               # 页面组件 (Umi 约定式路由)
-│   │   ├── index.tsx        # 首页 /
-│   │   ├── login/           # /login
-│   │   │   └── index.tsx
-│   │   └── [module]/        # 功能模块页面
-│   │       └── index.tsx
-│   ├── features/            # 按功能模块组织业务逻辑
-│   │   └── [module]/
-│   │       ├── components/  # 模块专属组件
-│   │       ├── hooks/       # 模块专属 hooks
-│   │       ├── api/         # 模块 API 请求封装 (基于 umi-request)
-│   │       ├── models/      # 模块 useModel 数据模型
-│   │       ├── stores/      # 模块 Zustand store (复杂状态)
-│   │       ├── types/       # 模块类型定义
-│   │       └── utils/       # 模块工具函数
-│   ├── models/              # 全局数据模型 (@umijs/plugin-model)
-│   ├── components/          # 全局通用组件
-│   ├── hooks/               # 全局通用 hooks
-│   ├── services/            # 全局 API 请求封装
-│   ├── utils/               # 全局工具函数
-│   ├── styles/              # 全局样式
-│   ├── types/               # 全局类型定义
-│   ├── access.ts            # 权限配置 (@umijs/plugin-access)
-│   ├── app.ts               # 运行时配置 (getInitialState, layout, request)
-│   └── global.less          # 全局样式入口
-├── mock/                    # Mock 数据 (Umi 内置 mock 支持)
-├── public/                  # 静态资源
-├── api-spec/                # OpenAPI 契约文件
-├── scripts/                 # 构建/生成脚本
-├── tests/                   # 测试文件
-├── package.json
-└── tsconfig.json
+参考项目 `pom.xml:6` 的 `micro-parent` 为 `[2.1.0,2.2.0)`，但 `README.md:22` 为 `[2.0.0,2.1.0)`；父 POM 的实际解析版本必须通过 `mvn help:effective-pom` 验证，不能猜测。
+
+## Maven 标准结构
+
+```text
+workspace/
+├── pom.xml
+├── src/main/java/<base-package>/
+│   ├── Application.java
+│   ├── controller/       # HTTP 入口（如有）
+│   ├── service/          # 业务编排和事务边界
+│   ├── dao/              # 持久化访问
+│   ├── domain/           # dto/form/bo/do/vo 与领域规则
+│   ├── infra/            # websocket/messaging/cache/persistence/observability 适配
+│   └── config/           # Spring 配置和 Properties 绑定
+├── src/main/resources/
+│   ├── application.yml
+│   └── application-<profile>.yml
+├── src/test/java/<base-package>/
+├── src/test/resources/
+├── Dockerfile
+└── docs/
 ```
 
-## Ant Design 组件库
+测试包镜像生产包：`controller/`、`service/`、`dao/`、`infra/websocket/`、`infra/messaging/`、`contract/`、`integration/`。
 
-Ant Design 5.x 已通过 @umijs/max 集成, 以下组件直接从 antd 导入, 不要重复封装:
+## 依赖方向
 
-- Button, Input, Select, Checkbox, Radio, Switch, DatePicker
-- Modal, Drawer, Popover, Tooltip, Popconfirm
-- Table (支持排序/分页/筛选), ProTable (高级表格)
-- Form + Form.Item (内置验证), ProForm (高级表单)
-- message / notification (全局提示)
-- Card, Badge, Tag, Avatar, Descriptions
-- Skeleton, Spin, Empty, Result
-- Layout, Menu, Breadcrumb, Tabs
-- Upload, Tree, Transfer, Cascader
+```text
+controller / websocket handler → service → dao
+                         ↘ infra adapters
+```
 
-如需二次封装, 放在 workspace/src/components/ 下并在目录 README.md 中说明封装原因。
+- Controller/Handler 不直接访问 DAO。
+- Service 负责业务编排、事务边界和领域错误映射。
+- DAO 只负责持久化；Infra 负责 WebSocket、RabbitMQ、Redis、外部系统和可观测性适配。
+- DTO/Form/BO/DO/VO 不混用；DO 不直接作为对外响应。
+- 配置从 Spring `@ConfigurationProperties`、profile、Nacos 或 Secret 读取。
+
+## 本地依赖与运行验证
+
+参考项目的本地集成依赖为 Nacos、RabbitMQ、MariaDB、Redis；是否由目标工程的 Compose、CI 模板或外部环境提供，必须在 PRD/任务中明确。默认验证顺序：
+
+```bash
+mvn -B -ntp validate
+mvn -B -ntp spotless:check
+mvn -B -ntp test
+mvn -B -ntp verify
+```
+
+服务接入后再验证 `/actuator/health`、readiness、WebSocket `/ws` 和消息链路。未启动真实依赖时不得把集成测试写成通过。
+
+## 不在本规则中假设的内容
+
+- 不默认引入 JPA、Springdoc、STOMP、SockJS、Kafka、Testcontainers 或 Kubernetes。
+- 不默认存在 REST/OpenAPI；WebSocket JSON 与 RabbitMQ 消息契约必须指向真实协议文件。
+- 不默认多副本无状态：参考项目的临时 RPC 回复路由在本机内存，需单实例或粘性路由，除非 ADR 明确改变。

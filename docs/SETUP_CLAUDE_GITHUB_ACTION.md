@@ -155,7 +155,7 @@ jobs:
 | 参数 | 说明 | 改成什么 |
 |---|---|---|
 | `--model claude-opus-4-7` | 用最强模型 | Pro 想省额度改 `claude-sonnet-4-6`; 高频任务改 `claude-haiku-4-5-20251001` |
-| `--allowedTools` | 工具白名单 | 想让 Claude 跑测试再加 `,Bash(npm test:*),Bash(pnpm test:*),Bash(cargo test:*)` |
+| `--allowedTools` | 工具白名单 | Java 后端验证可加 `,Bash(mvn:*),Bash(java -version:*)`；不要放行真实部署/Secret 读取 |
 | `allowed_non_write_users: ""` | 限制只有写权限用户能触发 | 公开 repo 想严格控制就保持空; 想任何人都能触发改为 `"*"` (有风险) |
 | `trigger_phrase: "@claude"` | 触发词 | 想改成其他词 (例如 `@bot`) 在这里改 |
 

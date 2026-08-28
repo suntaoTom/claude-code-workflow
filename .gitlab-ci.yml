@@ -1,0 +1,9 @@
+# Java GitLab CI 入口
+# 参考 microboot-service-websocket 的共享 Java GitOps 模板；凭据只配置在 GitLab CI variables。
+include:
+  - project: "charprotocol/platform/microboot-ci-templates"
+    ref: main
+    file:
+      - "/templates/java-gitops-service.gitlab-ci.yml"
+
+# 本仓库是工作流模板仓库；没有 workspace/pom.xml 时由模板或 GitHub CI 跳过 Java 构建。

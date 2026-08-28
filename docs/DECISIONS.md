@@ -31,7 +31,21 @@
 
 ---
 
-## 2026-04-20: 在线文档 (飞书/Notion/语雀 等) 不做 API 集成, 走「导出 + prd-import」路径
+## 2026-08-28: 工作流领域切换为 Java 后端，参考 WebSocket 服务但不绑定源码
+
+**背景**: 原仓库规则、命令、模板、hooks 和 CI 以 UmiJS/React/TypeScript 前端为默认语境，无法直接指导 Java 后端的分层、WebSocket、RabbitMQ 可靠性和 Maven 交付。
+
+**决策**: 保留命令名和 SDLC 拓扑，重写领域规则、命令、测试/故障模板、审查门禁、构建部署和 CI。以 `/Users/sundaotao/Desktop/web3/backend/microboot-service-websocket` 的已核实技术栈作为背景：Java 21、Maven、Spring Boot、Nacos、原生 WebSocket、RabbitMQ、Redis、MyBatis-Plus、Actuator、JUnit、Spotless、Docker 和 GitLab Java GitOps；GitHub Actions 同时保留为兼容入口。外部目录不复制、不作为依赖、不绑定为 workspace；本次不创建示例 Java 服务。
+
+**理由**: SDLC 追溯链、闸门、状态机和并发收口是工种无关内核；WebSocket 握手/心跳、消息幂等/Inbox/Outbox/DLQ、事务、日志脱敏和 JAR/镜像验证则是后端领域约束，必须显式进入规则而非继续沿用前端假设。
+
+**未决**: 参考项目 `pom.xml:6` 的 `micro-parent` `[2.1.0,2.2.0)` 与其 `README.md:22` 的 `[2.0.0,2.1.0)` 不一致；当前不冻结实际解析版本，后续由目标工程 `mvn help:effective-pom` 验证。具体部署目标、package/groupId、真实契约和集成依赖在接入业务工程时确认。
+
+**影响**: `CLAUDE.md`、根 README、`.claude/rules/`、`.claude/commands/`、`.claude/agents/`、`.claude/hooks/`、`docs/` 模板、`.claude/workflow.json`、`.github/`、`.gitlab-ci.yml`。
+
+---
+
+
 
 **背景**: `prd-import` 支持本地 `.docx/.xlsx/.pptx` 后, 下一个问题是在线文档。团队常用飞书 / Notion / 语雀 / 腾讯文档 / Google Docs 写需求, 产品给过来的往往是在线链接而非文件。"能不能让 `/prd` 直接读在线链接?"是自然诉求。
 

@@ -1,150 +1,55 @@
-# 文件与模块说明规范
+# 文件与模块说明规范（Java 后端）
 
-> 目的: 让任何 AI 模型或开发者接手项目时，能快速理解每个目录和文件的作用，降低维护成本。
+每次创建或修改 Java、配置、迁移、测试或脚本文件时，必须同步维护所在目录 `README.md` 的文件清单；共享 README 由主 agent 串行收口。
 
-## 核心规则
+## Java 文件头 JavaDoc
 
-**每次创建或修改代码文件时，必须同步维护所在目录的 `README.md`。**
+```java
+/**
+ * @description 处理 WebSocket 入站消息并提交业务服务。
+ * @module infra.websocket
+ * @dependencies WebsocketSessionManager, MessageService
+ * @prd docs/prds/realtime-message.md#入站消息处理
+ * @task docs/tasks/tasks-realtime-message-YYYY-MM-DD.json#T005
+ * @api docs/apis/websocket.md#inbound-message
+ * @rules
+ *   - 未通过身份校验的连接不得进入业务消息处理。
+ *   - 重复 messageId 不得重复产生业务副作用。
+ */
+```
 
-## 目录级 README.md
+要求：
 
-每个功能目录（components/, hooks/, stores/, utils/, api/, types/）都必须有一个 `README.md`，格式如下：
+- `@prd` 指向真实 PRD 二级标题；`@task` 指向真实 task ID；`@api` 指向真实 OpenAPI、WebSocket schema 或消息契约锚点。
+- `@rules` 只写业务规则，尽量照抄 PRD 原文；不写“使用某个类/注解”等实现细节。
+- 配置类、消息处理器、DAO、数据库迁移和集成测试也要挂载适用锚点。
+- 纯工具可省略业务锚点，但必须说明参数、返回值和边界。
+- 公共包添加 `package-info.java`，说明职责和允许的依赖方向。
+
+## 目录 README
+
+每个功能目录至少维护：
 
 ```markdown
 # 目录名称
 
-> 一句话描述这个目录的职责
+> 一句话描述职责
 
 ## 文件清单
 
 | 文件名 | 说明 | 依赖 | 最后更新 |
 |--------|------|------|----------|
-| UserProfile.tsx | 用户资料展示组件，支持编辑模式 | useUserData, UserAvatar | 2026-03-30 |
-| UserCard.tsx | 用户卡片缩略组件 | Avatar (antd) | 2026-03-30 |
+| MessageHandler.java | WebSocket 消息入口 | Service | YYYY-MM-DD |
 
 ## 模块关系
 
-> 简要描述本目录内文件之间、以及与其他模块的依赖关系
+> 本目录与其他层的依赖方向和事务/消息边界。
 ```
 
-## 功能模块级 README.md
+## 模块 README
 
-每个 `workspace/src/features/[module]/` 目录必须有一个顶层 `README.md`，格式如下：
+`workspace/src/main/java/<base-package>/` 及 `controller/`、`service/`、`dao/`、`domain/`、`infra/`、`config/` 等目录需要说明职责、核心流程、对外暴露和依赖方向。测试目录 README 说明测试分层、外部依赖和启动方式。
 
-```markdown
-# 模块名称
+## 追溯要求
 
-> 模块的业务功能描述
-
-## 子目录结构
-
-| 目录 | 说明 |
-|------|------|
-| components/ | 模块专属 UI 组件 |
-| hooks/ | 模块数据逻辑 hooks |
-| api/ | 后端接口请求封装 |
-| stores/ | Zustand 状态管理 |
-| types/ | TypeScript 类型定义 |
-| utils/ | 模块工具函数 |
-
-## 核心业务流程
-
-> 用文字或简单流程描述核心逻辑，例如：
-> 用户登录 → 调用 api/login → store 存 token → 跳转首页
-
-## 对外暴露
-
-> 列出本模块向外导出的主要组件、hooks、类型，供其他模块引用
-```
-
-## 文件头部注释
-
-每个代码文件顶部必须包含说明注释：
-
-```typescript
-/**
- * @description 用户资料展示组件，支持查看和编辑两种模式
- * @module features/user/components
- * @dependencies useUserData, useAuthStore, Avatar (antd)
- * @prd docs/prds/user-module.md#用户资料
- * @task docs/tasks/tasks-user.json#task-012
- * @design Figma: https://figma.com/file/xxx#Frame-UserProfile 或 docs/designs/user-profile.png
- * @api docs/apis/user.md#getuserinfo, docs/apis/user.md#updateuserprofile
- * @rules
- *   - 非登录用户只能看公开字段 (昵称、头像)
- *   - 编辑模式下, 手机号需通过 PHONE_REG 校验
- *   - 保存失败时保留表单内容并提示错误
- * @example
- *   <UserProfile userId="123" editable />
- */
-```
-
-对于不同类型的文件，注释需包含：
-
-- **组件**: description, module, dependencies, **prd, task, design, rules**, props 说明, example, 调用接口时加 **api**
-- **hooks**: description, module, **prd, task, rules, api**, params, returns, example
-- **stores**: description, module, **prd, task, rules, api**, state 字段说明, actions 说明
-- **utils**: description, module, params, returns, example (纯工具函数通常无需 prd/rules/api)
-- **api**: description, module, **prd, api**(强相关, 必填), 请求方法, 请求路径, params, returns
-- **types**: description, module, 各字段说明; DTO/响应类型映射 OpenAPI Schema 时加 **api** 指向 Schema 锚点
-
-### 业务锚点字段说明 (重要)
-
-`@prd` / `@task` / `@design` / `@api` / `@rules` 是「需求 → 设计 → 协议 → 代码 → 测试」可追溯链的关键, **编码时必须同步写入**:
-
-| 字段 | 格式 | 作用 |
-|------|------|------|
-| `@prd` | `docs/prds/<文件>.md#<锚点>` | 指向对应的 PRD 片段, 供查阅需求原文 |
-| `@task` | `docs/tasks/<文件>.json#<taskId>` | 指向 `/plan` 生成的任务条目 |
-| `@design` | Figma URL / 本地文件路径 / 空 | 指向设计稿帧, 供对照视觉规范 (无设计稿可省略) |
-| `@api` | `docs/apis/<tag>.md#<operation-id>`, 多个用逗号分隔 | 指向协议层接口契约 (由 `tools/gen_api_md.py` 从 OpenAPI 生成)。api 层必填, hook/store/component 直接调接口时填 |
-| `@rules` | 多行中文规则列表, 每行一条 | 本文件承载的**业务规则**, 是测试断言的唯一来源 |
-
-**`@rules` 的写法原则**:
-- 只写**业务规则**, 不写技术实现 (✅「手机号需校验」 ❌「使用 useState 管理表单」)
-- 每条规则都应该可以转化为一个测试用例
-- 如果规则来自 PRD, 尽量保留原文措辞, 便于对齐
-- 无业务规则的纯工具函数可省略 (如 `formatDate`), 但测试预期必须来自函数签名/JSDoc
-
-**`@api` 的写法原则**:
-- 指向 `docs/apis/<tag>.md` 中的 operation 锚点 (由 `tools/gen_api_md.py` 从 OpenAPI 生成)
-- 主源是 `docs/apis/openapi/*.json` 或 `workspace/api-spec/*.json`, **不要手改生成的 md**; 接口变更走「换 JSON → 重跑脚本」
-- 一个文件调多个接口时, 全部列出, 便于 `/review` 反向校验「代码调的接口是否在 PRD 圈定范围内」
-- DTO/响应 type (api 层入参/出参) 建议同时指向 OpenAPI Schema 锚点: `@api docs/apis/user.md#schema-userresp`
-
-**测试生成时的作用**: `/test` 命令会读取 `@rules` 作为测试用例骨架, 每条规则对应一个 `it()`, 从根本上避免 AI「根据源码猜预期」的问题。详见 `.claude/commands/test.md`。
-
-## 触发时机
-
-以下操作必须同步更新对应 README.md：
-
-1. **新建文件** → 在目录 README.md 的文件清单中新增一行
-2. **删除文件** → 从目录 README.md 中移除对应行
-3. **重命名文件** → 更新 README.md 中的文件名
-4. **修改文件职责** → 更新 README.md 中的说明列
-5. **新建功能模块** → 创建模块级 README.md
-6. **修改模块依赖关系** → 更新模块间关系描述
-
-## 全局索引
-
-在 `workspace/src/README.md` 中维护一个项目整体索引：
-
-```markdown
-# 项目模块索引
-
-## 功能模块 (features/)
-
-| 模块 | 说明 | 状态 |
-|------|------|------|
-| user | 用户管理（登录/注册/资料） | 开发中 |
-| dashboard | 数据看板 | 已完成 |
-
-## 全局通用
-
-| 目录 | 说明 |
-|------|------|
-| components/ | 通用 UI 组件 |
-| hooks/ | 通用 hooks |
-| lib/ | 第三方库封装 |
-| types/ | 全局类型定义 |
-```
+链路必须保持：`PRD 锚点 → taskId → JavaDoc @prd/@task/@api/@rules → JUnit 测试方法 → 测试报告矩阵`。引用不存在的文件、章节、operationId 或消息类型视为阻塞问题；遇到上游冲突必须停止并进入 `## 冲突待决`，不能自行改写。

@@ -1,31 +1,18 @@
-# hooks/ — Claude Code 自动化钩子
+# hooks/ — Java 后端自动化钩子
 
-> 配置在 `.claude/settings.json` 中, 在特定事件时自动执行。只提醒, 不阻断。
+> 只做快速提醒，不代替 `/review`、`/security-gate` 或完整 Maven 构建。
 
 ## 文件清单
 
 | 文件 | 触发时机 | 作用 |
 |------|---------|------|
-| check-hardcode.sh | 每次编辑/创建 ts/tsx 文件后 | 扫描中文硬编码, 违反 P0 规则立刻警告 |
-| check-tasks-status.sh | 每次开启新会话时 | 列出 in-progress 的任务, 提醒上次中断位置 |
-| pre-commit-check.sh | git commit 前 | 检查任务状态是否忘记更新为 done |
-
-## 添加新 hook
-
-1. 在本目录创建 `.sh` 脚本, 加 `chmod +x`
-2. 脚本顶部注释写明: 触发时机 + 作用
-3. 在 `.claude/settings.json` 的对应事件下引用: `".claude/hooks/xxx.sh"`
-4. 更新本 README 的文件清单
-
-## 可用的环境变量
-
-| 变量 | 可用事件 | 说明 |
-|------|---------|------|
-| `$CLAUDE_FILE_PATH` | PostToolUse (Edit/Write) | 刚编辑的文件路径 |
-| `$CLAUDE_TOOL_INPUT` | PreToolUse | 即将执行的工具输入内容 |
+| [check-hardcode.sh](check-hardcode.sh) | 编辑 Java/POM/YAML/properties 后 | 提醒凭据、连接串、日志敏感信息 |
+| [format.sh](format.sh) | 编辑 Java/POM/YAML/properties 后 | 有 Maven 工程时执行 Spotless 检查 |
+| [check-tasks-status.sh](check-tasks-status.sh) | 会话开始 | 列出 in-progress 任务 |
+| [pre-commit-check.sh](pre-commit-check.sh) | `git commit` 前 | 提醒任务状态和后端关键文件变更 |
 
 ## 设计原则
 
-- 只提醒, 不阻断 (exit 0, 不 exit 1)
-- 没问题就静默, 有问题才输出
-- 超时 5 秒, 不做重操作
+- 默认 `exit 0`，只提醒，不阻断编辑。
+- 不输出 Secret 值；扫描命中必须人工阅读上下文。
+- 完整 Maven、依赖和集成环境验证交给 `/build`/CI。

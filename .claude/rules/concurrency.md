@@ -1,82 +1,41 @@
 # 并发执行策略：串行 vs 并行（通用规则）
 
-> **适用范围**:不限命令。`/code` 拆 tasks、`/test` 写多文件测试、`/review` 多维度审查、
-> `/fix` 多 bug、甚至一次回答里的多个独立子任务 —— **任何时候有「多个工作单元」要做,
-> 都先想一下:它们能并行吗?** 默认追求并行, 有依赖/冲突才串行。
->
-> 起因:`/code` 一直一个任务接一个任务**串行**跑, 即便 tasks.json 里很多任务互不依赖、
-> 改的也不是同一个文件 —— 白白浪费并发能力, 拖慢交付。
+适用于 `/code`、`/test`、`/review`、`/fix` 及本仓库的多个独立任务。默认追求并行，但依赖、共享文件或顺序推理任一成立就串行。
 
----
+## 三个必要条件
 
-## 一、默认心智
+两个工作单元只有同时满足以下条件才能并行：
 
-> **能并行就并行, 有依赖或写同一文件才串行。**
+1. DAG 中无直接/传递依赖；
+2. 不写同一文件，也不写同一共享资源；
+3. 不需要先看另一个结果再决定本任务方案。
 
-不是「默认串行, 特殊情况并行」, 而是反过来:**默认评估并行可行性**, 只有以下三种之一成立才退回串行。
+## Java 后端拓扑
 
-## 二、两个工作单元能不能并行?(三条全满足才行)
+常见功能链：
 
-1. **无依赖边** — 依赖图(DAG)里两者之间没有路径。tasks.json 的 `dependencies` 字段就是这张图;
-   A 在 B 的 `dependencies` 里(直接或传递)→ 必须 A 先 B 后, 不能并行。
-2. **不写同一文件** — 两者的产出文件(`filePath`)不同, 且**不同时改同一个共享文件**
-   (见第四节「串行收口点」)。两个 agent 同时写一个文件 = 覆盖/冲突。
-3. **无隐式顺序** — 不是「先看 A 的结果, 再决定 B 怎么做」这种推理依赖。需要顺序思考的别拆并行。
-
-三条任一不满足 → 串行。
-
-## 三、有 DAG 时怎么排并行批次(如 /code 拆 tasks.json)
-
-```
-1. 拓扑分层: 按 dependencies 把任务排成「层」, 同层内互不依赖
-2. 层内分组: 同层里再按「文件不重叠」分组 → 每组可并行
-3. 逐层推进: 一层的并行批次全跑完 → 进下一层
-4. 共享文件收口: 见第四节
+```text
+contract → schema/config/migration → domain/dao → service
+→ controller/websocket/messaging → unit/integration/contract-test
+→ docker/ci/deploy
 ```
 
-例:5 个独立功能模块, 各自 `types/api → hooks/store → component → page` 链 —— **5 条链并行**(各开一个 subagent),
-**链内串行**。而不是 20 个任务一条线串到底。
+链内串行；不同模块在依赖已完成且文件不重叠时并行。
 
-## 四、串行收口点（关键防冲突）
+## 必须主 agent 串行收口
 
-这些是**多任务都会写的共享文件**, 绝不让多个并行 agent 同时写:
+- `pom.xml`、Maven parent/BOM、依赖锁定和 CI 总入口
+- `application*.yml`、Nacos/profile、Secret 引用和部署配置
+- 公共 DTO/VO、错误码、WebSocket/RabbitMQ 契约、exchange/queue/topology
+- 数据库 migration 顺序、公共 schema、Outbox/Inbox 状态定义
+- 目录 README、package-info、任务 JSON 的 status、全局索引和汇总报告
 
-- 目录级 `README.md`(文件清单表)
-- 路由配置(`router.tsx` / `routes.ts` / 路由注册)
-- 国际化 locale 文件(`zh.json` / `en.json` / i18n 资源)
-- `package.json`、barrel 导出 `index.ts`、`tasks.json` 的 `status` 字段
-- 任何「注册表 / 索引 / 汇总」型文件(全局 store 注册、provider 树等)
+并行 agent 只写自己被分配的 Java/测试文件，并回报需收口的 README/协议/配置行。
 
-**处理方式**:并行的 subagent **只写自己的源文件**, 把「我需要往 README 加的行 / i18n key / 路由项 / index 导出」
-**回报给主 agent**;主 agent 在每批并行结束后**串行地、统一地**更新这些共享文件 + 改 status + 跑 lint/类型检查。
+## 何时不并行
 
-## 五、用什么并行
+任务少于 3 个、文件高度重叠、线性依赖链、需要探索式顺序推理或成本敏感时直接串行。多个 bug 共享配置/协议/migration 时也串行。
 
-- **`Agent` 工具**:每个独立工作单元 spawn 一个 subagent。**关键:把多个 Agent 调用放在同一条消息里
-  一次发出** → 真并发(分散在多条消息 = 还是串行)。
-- **专用 agent**:`/fix` 用 bug-fixer(一 bug 一个);`/test` 用 test-writer;`/review` 用 code-reviewer
-  (一目录/一维度一个)。这些 agent 本就是为并行 spawn 设计的。
-- **`isolation: "worktree"`**:仅当多个 agent **必须并行改有重叠的文件**时才用(贵 ~200-500ms/agent + 磁盘, 慎用)。
-  大多数情况按第四节「源文件不重叠 + 共享文件收口」就够, 不需要 worktree。
-- **并发上限**:Agent 工具同时约 10 个, 超出自动排队 —— 可以一次抛很多, 不用自己掐。
+## 失败隔离
 
-## 六、何时**别**并行(并行不是免费的)
-
-- **工作单元 < 3 个** → 直接串行, spawn 开销不值。
-- **文件高度重叠**(大家都改 router/i18n/同一个大组件)→ 串行, 或先把共享写拆出来。
-- **需要顺序推理**(每步结论影响下一步、探索式任务)→ 串行。
-- **一条线性依赖链**(types→hook→component→page)→ 链内必串行(但多条链之间可并行)。
-- **成本敏感 / 小改动** → 别为 3 个小任务开 10 个 agent;按工作量给并发度。
-
-## 七、失败隔离
-
-- 一个并行 agent 失败/被拒 → **不影响其他**;主 agent 收集结果, 失败的单独重试或标 blocked。
-- 并行批次结束后, 主 agent **统一**跑一次 lint + 类型检查 + 改 status + 收口共享文件, 再进下一层。
-
----
-
-## 一句话决策
-
-> 手上有 N 个要做的事 → 画依赖图 → **无依赖边 + 不写同文件 + 无顺序推理 的, 一次性并行 spawn**;
-> 其余串行;共享文件(README/router/i18n/index/status)永远主 agent 串行收口。
-> N < 3 或高度耦合 → 直接串行, 别硬拆。
+一个 agent 失败不影响同批其他任务；主 agent 收集结果，必要时单独重试或标记 blocked。每批结束统一校验 `mvn validate`/Spotless/相关测试，未接入 workspace 时明确跳过，不虚报。

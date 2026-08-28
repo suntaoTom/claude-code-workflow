@@ -1,0 +1,42 @@
+# Java CI（GitHub Actions）
+name: Java CI
+
+on:
+  push:
+    branches: [main, master, dev, test]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: ${{ hashFiles('workspace/pom.xml', 'pom.xml') != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Maven validate
+        working-directory: workspace
+        run: mvn -B -ntp validate
+      - name: Spotless check
+        working-directory: workspace
+        run: mvn -B -ntp spotless:check
+      - name: Test
+        working-directory: workspace
+        run: mvn -B -ntp test
+      - name: Verify
+        working-directory: workspace
+        run: mvn -B -ntp verify
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-test-reports-${{ github.sha }}
+          path: workspace/target/surefire-reports/
+          if-no-files-found: ignore

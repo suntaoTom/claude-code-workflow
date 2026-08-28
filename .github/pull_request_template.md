@@ -1,60 +1,46 @@
 <!--
-  提交 PR 前请填完下方各项。
-  - AI 自动生成的 PR (如 /fix 开出的) 会自动填充部分字段, 人工 PR 手动填。
-  - 模板字段不适用时写 "-" 或删除该行, 不要留空。
+  Java 后端 PR/MR 模板。字段不适用时写 "-"，不要留空。
 -->
 
 ## 变更类型
 
-- [ ] ✨ feat (新功能, 由 `/code` 产出)
-- [ ] 🐛 fix (Bug 修复, 由 `/fix` 或手动产出)
-- [ ] ♻️ refactor (重构, 不改变外部行为)
-- [ ] 📝 docs (仅文档)
-- [ ] 🧪 test (仅测试)
-- [ ] 🔧 chore (依赖/配置)
+- [ ] feat（新能力）
+- [ ] fix（Bug 修复）
+- [ ] refactor（不改变外部行为）
+- [ ] docs / test / chore
 
-## 关联 PRD / 任务
+## 追溯
 
-<!--
-  可追溯链: PRD → task → 源码 @prd/@task/@rules → 本 PR
-  只要改了业务代码, 这里必填。
--->
+- PRD：`docs/prds/<module>.md#<anchor>`
+- 任务：`docs/tasks/<tasks>.json#T00X`
+- Bug/Issue：`#xxx` 或 `-`
+- API/WebSocket/RabbitMQ 契约：路径、版本、锚点或 `-`
 
-- PRD: docs/prds/xxx.md#<功能点锚点>
-- 任务: docs/tasks/tasks-xxx.json#T00X
-- (fix 类) 关联 issue: #xxx
+## 变更与影响
 
-## 变更内容
-
-<!-- 一句话概括做了什么 (why > what), 代码 diff 能看的不用重复 -->
-
-## 影响范围
-
-- 涉及模块: `workspace/src/features/xxx/`
-- 是否涉及 API 契约变更: ❌ 否 / ✅ 是 (如是, 说明 `workspace/api-spec/openapi.json` 改了什么)
-- 是否涉及 PRD 业务规则变更: ❌ 否 / ✅ 是 (如是, 说明哪个 PRD 哪条规则, 是否评审过)
+- 变更摘要：
+- 影响模块/包：`workspace/src/main/java/<base-package>/...`
+- 配置/profile 变更：无 / 有（只写配置键，不写 Secret）
+- 数据库 migration：无 / 有（版本与兼容策略）
+- 消息兼容性：无 / 有（message type、版本、旧消费者行为）
+- WebSocket 兼容性：无 / 有（握手、消息、关闭和多实例影响）
 
 ## 验证清单
 
-<!-- fix/feat 类 PR 必填, 文档类可省略 -->
+- [ ] `mvn -B -ntp validate`
+- [ ] `mvn -B -ntp spotless:check`
+- [ ] `mvn -B -ntp test`
+- [ ] `mvn -B -ntp verify`（如适用）
+- [ ] 规则对应的 JUnit/集成/契约测试已补齐
+- [ ] 测试报告和人工 checklist 已更新
+- [ ] JavaDoc `@prd/@task/@api/@rules` 与目录 README 已同步
+- [ ] 无密钥、Token、连接串、完整 Payload 或 PII 进入代码/日志/提交
+- [ ] `/security-gate` 通过（如涉及后端代码/配置）
 
-- [ ] `pnpm lint` 通过
-- [ ] `pnpm test` 全绿 (单模块 + 回归)
-- [ ] 新增了覆盖本变更的测试 (fix 类必须有失败 → 修复 → 转绿的测试)
-- [ ] 源文件 JSDoc 的 `@prd` / `@task` / `@rules` 同步更新
-- [ ] 受影响目录的 `README.md` 文件清单同步更新
-- [ ] 无硬编码 (见 [.claude/rules/no-hardcode.md](../.claude/rules/no-hardcode.md))
+## 未解决问题与回滚
 
-## 延伸问题 (可选)
+- 未验证事项：
+- 生产/集成环境限制：
+- 回滚版本与数据库/消息兼容限制：
 
-<!--
-  发现但不在本 PR 处理的问题, 方便审阅者决定是否开单独 issue。
-  /fix 命令产出的 PR 会在这里自动填充。
--->
-
-- -
-
----
-
-<!-- 若本 PR 由 AI (Claude Code) 生成, 保留下方标记便于追溯 -->
 <!-- 🤖 Generated with Claude Code (/fix | /code) -->

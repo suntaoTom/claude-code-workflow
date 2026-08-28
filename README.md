@@ -1,143 +1,77 @@
-# AI Frontend Automation
+# Java 后端自动化工作流
 
-> 运行在 [Claude Code](https://docs.claude.com/en/docs/claude-code) 之上的**前端研发工作流框架** — 把「需求 → 设计 → 代码 → 测试 → 上线」全链路拆成可追溯的命令、技能、子代理和规则, 由 AI 执行, 人监督每个关键节点。
+> 运行在 Claude Code 之上的 Java 后端 SDLC 工作流框架：把需求、协议、实现、验证、安全、构建、部署和发布串成可追溯链。
 
----
+## 定位
 
-## 这是什么
+本仓库维护工作流配置和文档，不是业务服务源码。技术背景参考 `/Users/sundaotao/Desktop/web3/backend/microboot-service-websocket`：Java 21、Maven、Spring Boot、原生 WebSocket、RabbitMQ、Redis、MyBatis-Plus、Actuator、JUnit 和 GitLab Java GitOps。参考目录不被复制、引用或绑定。
 
-一套给前端团队用的工程化框架, 解决两个老问题:
+## 主流程
 
-1. **AI 写代码没约束** → 一套硬闸门 (PRD 完备性 / `@rules` 追溯链 / P0 禁硬编码 / Hooks 静默守护) 把 AI 拉回轨道
-2. **AI 写代码无记忆** → ADR / retrospectives / tasks.json status 等档案, 把每次决策沉淀成跨会话可读的历史
-
-### 不是什么
-
-- ❌ 不是单个「超级 agent」 — 主力是命令 + 多子代理协作
-- ❌ 不是纯 skill 包 — 技能包只是其中一类部件
-- ❌ 不是 UI 组件库 — 它是流程, 组件用的是 Ant Design 5
-
-### 是什么
-
-一个完整的 SDLC (软件开发生命周期) 框架, 由五类部件协作:
-
-| 部件                | 位置                                   | 触发方式       | 数量 | 适合                |
-| ------------------- | -------------------------------------- | -------------- | ---- | ------------------- |
-| **命令** (commands) | [.claude/commands/](.claude/commands/) | 用户 `/<name>` | 14   | 主工作流 (纯思考)   |
-| **技能包** (skills) | [.claude/skills/](.claude/skills/)     | 显式或 AI 自动 | 4    | 跑脚本拿数据        |
-| **子代理** (agents) | [.claude/agents/](.claude/agents/)     | 主命令 spawn   | 4    | 并行 / 保护 context |
-| **钩子** (hooks)    | [.claude/hooks/](.claude/hooks/)       | 事件自动       | 3    | 静默守护 (不阻断)   |
-| **规则** (rules)    | [.claude/rules/](.claude/rules/)       | AI 自动遵守    | 5    | 长期稳定的编码约束  |
-
-边界和添加规范详见 [.claude/README.md](.claude/README.md)。
-
----
-
-## 目录总览
-
-```
-AI-Frontend-Automation/
-├── README.md                 ← 你在这
-├── CLAUDE.md                 ← 项目规则 (Claude Code 启动时自动加载)
-├── .claude/                  ← AI 自动化配置
-│   ├── commands/             ← 主流程命令 (14 个, /prd /plan /code ...)
-│   ├── skills/               ← 扩展技能包 (ext-perf-audit 等 4 个)
-│   ├── agents/               ← 子代理 (test-writer / code-reviewer / bug-fixer / meta-auditor)
-│   ├── hooks/                ← 事件钩子 (硬编码检测 / 任务状态提醒 / 提交前检查)
-│   └── rules/                ← 编码规范 (coding-style / file-docs / no-hardcode / tech-stack / testing)
-├── docs/                     ← AI 工作流产物 + 历史档案
-│   ├── WORKFLOW.md           ← 八步法操作手册 (新人必读)
-│   ├── DECISIONS.md          ← 架构决策记录 (ADR)
-│   ├── prds/                 ← /prd 生成的产品需求文档
-│   ├── tasks/                ← /plan 生成的任务清单 (JSON)
-│   ├── bug-reports/          ← 测试端 AI 或人工报的 bug
-│   └── retrospectives/       ← /meta-audit 产出的健康度快照 (只读, 不可变)
-└── workspace/                ← 实际业务工程 (可替换, 当前示例: 前端 UmiJS, 换工种见 docs/ADAPTING.md)
-    ├── src/
-    ├── tests/                ← 镜像 src/ 结构
-    ├── api-spec/             ← OpenAPI 契约 (openapi.json + 可选 openapi.local.json)
-    └── config/
+```text
+/prd → /prd-check → /plan → /plan-check → /code → /test
+     → /review → /security-gate → /build → /deploy → /release
 ```
 
----
+辅助命令：`/bug-check`、`/fix`、`/start`、`/meta-audit`。
 
-## 主线工作流 (八步法)
+| 阶段 | Java 后端产出 |
+|------|---------------|
+| `/prd` | API、WebSocket 或异步消息需求书 |
+| `/plan` | contract/schema/config/controller/service/dao/infra/test 任务清单 |
+| `/code` | Maven 标准布局下的 Java、配置、迁移和消息基础设施 |
+| `/test` | JUnit、Spring Boot、数据库/Redis/RabbitMQ/WebSocket/契约测试 |
+| `/review` | 分层、事务、可靠性、协议兼容、性能和安全审查 |
+| `/build` | JAR、Docker 镜像、测试报告、SBOM/校验信息 |
+| `/deploy` | GitLab 或 GitHub 目标环境部署、健康检查、`/ws` smoke test |
+| `/release` | artifact/镜像/迁移/协议版本、兼容性和回滚记录 |
 
-```
-/prd <需求>              口语需求 → PRD 草稿 (含 [待确认])
-   ↓  人工审 PRD, 清零 [待确认]
-/plan @docs/prds/x.md    PRD → 任务清单 (tasks.json, 含 prdRef + businessRules)
-   ↓
-/code @docs/tasks/x.json 任务清单 → 源码 (JSDoc 写入 @prd / @task / @rules)
-   ↓
-/test <目录>             源码 @rules → 测试 it() (每条规则一个)
-   ↓
-/review <目录>           代码审查 (可 spawn code-reviewer 独立视角)
-   ↓
-/build <平台>            构建 + 本地预览 (web / ios / android / harmony)
-   ↓
-/deploy <平台> --env staging  推送 + 健康检查 + 通知
-   ↓
-/release <版本>          自动聚合 changelog + 打 tag (可选)
-```
+## 核心原则
 
-配套命令: `/fix` `/bug-check` `/prd-check` `/plan-check` `/start` `/meta-audit`
+1. **可追溯**：PRD 锚点 → task ID → JavaDoc `@prd/@task/@api/@rules` → 测试用例。
+2. **人监督关键节点**：需求、任务、代码审查和生产部署必须有人确认。
+3. **失败显式可见**：不跳过错误；真实生产基础设施、多节点、负载和故障演练不伪装成自动化通过。
+4. **可靠性优先**：WebSocket 身份和生命周期、RabbitMQ ack/幂等/重试/DLQ、Redis Presence、事务边界和协议兼容必须有来源。
 
-详细步骤见 [docs/WORKFLOW.md](docs/WORKFLOW.md)。
+## 技术背景
 
----
+- Java 21 / Maven 3.9.9 / Spring Boot 3.2.12
+- Spring Cloud 2023.0.6 / Spring Cloud Alibaba 2023.0.3.4 / Nacos
+- 原生 Spring WebSocket (`TextWebSocketHandler`)，默认握手 `/ws`
+- RabbitMQ/Spring AMQP、Inbox/Outbox、Publisher Confirm/Return、Retry/DLQ
+- Redis、MyBatis-Plus、Actuator、Micrometer、OpenTelemetry
+- JUnit 5、Mockito、AssertJ、Spring Boot Test、Spotless、Docker 分层 Jar
 
-## 三大设计原则
-
-1. **可追溯 (Traceable)**
-   PRD 锚点 → 任务 ID → 源码 `@prd/@rules` → 测试 `it()`, 一条线贯穿。任何一环改了, 顺着链路扫下游。
-
-2. **人监督关键节点**
-   AI 做全量执行, 但 PRD 审、任务审、review、production 部署都停下等人点头。AI 不能默默绕过闸门。
-
-3. **失败显式可见**
-   不隐藏错误, 不自动绕过, 不以「通过」掩盖 bug。测试红了按 4 类分诊 (测试代码 → 环境 → 测试预期 → 源码), 源码是最后才怀疑的。
-
----
+参考项目的 `micro-parent` 版本在 POM 与 README 中不一致，实际版本需通过 effective POM 后再冻结。
 
 ## 快速开始
 
-```bash
-# 1. 安装依赖
-pnpm install
-
-# 2. 放 OpenAPI 契约 (后端给)
-cp <后端文件> workspace/api-spec/openapi.json
-
-# 3. 生成 TS 类型 + 启动项目
-pnpm gen:api && pnpm dev
-
-# 4. 开 Claude Code 跑第一个功能
-claude
-> /start                       # 让 AI 认识项目 (首次必做)
-> /prd 我要做一个登录功能      # 生成 PRD 草稿
+```text
+/start
+/prd 增加一个需要认证的 WebSocket 消息能力
+# 人工补齐 [待确认]，再执行：
+/prd-check @docs/prds/<module>.md
+/plan @docs/prds/<module>.md
+/plan-check @docs/tasks/<tasks>.json
+/code @docs/tasks/<tasks>.json
+/test workspace/src/main/java/<base-package>/<module>
+/review workspace/src/main/java/<base-package>/<module>
+/security-gate
+/build --profile test
+/deploy --env staging
+/release v2.0.0
 ```
 
-完整 30 分钟登机指南见 [docs/WORKFLOW.md](docs/WORKFLOW.md#-快速开始-第一次打开项目必读)。
+目标服务接入后，构建验证以 `mvn validate`、`mvn spotless:check`、`mvn test`、`mvn verify` 为准。当前仓库不创建示例服务，因此不能宣称 Maven 构建已通过。
 
----
+## 目录
 
-## 我该从哪里开始看
+- `.claude/`：命令、规则、代理、hooks、工作流拓扑
+- `docs/prds/`：后端需求模板和需求文档
+- `docs/tasks/`：任务清单
+- `docs/test-reports/`：测试报告与人工清单
+- `docs/bug-reports/`：缺陷报告
+- `docs/retrospectives/`：元审计历史
+- `workspace/`：未来接入的 Java/Maven 工程（本次不初始化）
 
-| 我是...                                  | 第一个打开                                                                |
-| ---------------------------------------- | ------------------------------------------------------------------------- |
-| **第一次接手项目**                       | [docs/WORKFLOW.md](docs/WORKFLOW.md) — 八步法操作手册                     |
-| 想知道这套框架怎么演变的                 | [docs/DECISIONS.md](docs/DECISIONS.md) — 架构决策记录 (ADR)               |
-| 想了解编码规范                           | [CLAUDE.md](CLAUDE.md) — 规则入口, 引到各条细则                           |
-| 要改框架机制 (加命令 / skill / agent)    | [.claude/README.md](.claude/README.md) — 五类部件的边界                   |
-| 查历次健康度扫描                         | [docs/retrospectives/](docs/retrospectives/) — `/meta-audit` 只读观察报告 |
-| 前后端协作 / OpenAPI 流程                | [docs/WORKFLOW.md#🔌-前后端协作](docs/WORKFLOW.md#-前后端协作-重点)       |
-| 测试端 AI 怎么对接                       | [docs/bug-reports/README.md](docs/bug-reports/README.md)                  |
-| 启用 GitHub 自动化 (claude-fix / deploy) | [.github/SETUP.md](.github/SETUP.md)                                      |
-| 想把这套框架迁移到后端 / 数据 / 其他工种 | [docs/ADAPTING.md](docs/ADAPTING.md) — 跨工种适配清单                     |
-
----
-
-## 许可证
-
-MIT
+详见 [docs/WORKFLOW.md](docs/WORKFLOW.md)、[CLAUDE.md](CLAUDE.md) 和 [.claude/rules/](.claude/rules/)。
