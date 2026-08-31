@@ -2,7 +2,10 @@
 
 > 这套流程面向 Java 后端能力、原生 WebSocket 服务和 RabbitMQ 消息治理。参考项目是技术背景，不是当前仓库工作区。
 
+> 新人请先阅读 [ONBOARDING.md](ONBOARDING.md)；本文用于日常开发时查阅完整步骤。
+
 ## 快速开始
+
 
 母版复制到具体项目后，先把后端工程放入 `workspace/`，填写 `docs/backend-project-profile.yml`，并从仓库根目录启动 Claude Code。母版本身没有 `workspace/pom.xml`，因此不会执行 Maven。
 

@@ -4,6 +4,7 @@
 
 ```text
 docs/
+├── ONBOARDING.md        # 新人第一入口和成长路径
 ├── WORKFLOW.md
 ├── ADAPTING.md
 ├── DECISIONS.md

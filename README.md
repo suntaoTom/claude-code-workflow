@@ -2,7 +2,10 @@
 
 > 运行在 Claude Code 之上的 Java 后端 SDLC 工作流框架：把需求、协议、实现、验证、安全、构建、部署和发布串成可追溯链。
 
+> 第一次接触本项目？请先阅读 [新人入职指南](docs/ONBOARDING.md)，然后从仓库根目录启动 Claude 并执行 `/start`。
+
 ## 定位
+
 
 本仓库维护工作流配置和文档，不是业务服务源码。技术背景参考 `/Users/sundaotao/Desktop/web3/backend/microboot-service-websocket`：Java 21、Maven、Spring Boot、原生 WebSocket、RabbitMQ、Redis、MyBatis-Plus、Actuator、JUnit 和 GitLab Java GitOps。参考目录不被复制、引用或绑定。
 
