@@ -3,7 +3,7 @@
 # 用法: bash .claude/skills/ext-changelog/scripts/range-commits.sh [since] [scope] [author]
 # 例:   bash ... "7 days ago"
 #       bash ... "2026-04-01"
-#       bash ... "7 days ago" "workspace/src/features/login/"
+#       bash ... "7 days ago" "workspace/src/main/java/io/github/microboot/websocket/"
 #       bash ... "7 days ago" "." "alice"
 
 set -u

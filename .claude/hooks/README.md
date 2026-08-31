@@ -7,9 +7,8 @@
 | 文件 | 触发时机 | 作用 |
 |------|---------|------|
 | [check-hardcode.sh](check-hardcode.sh) | 编辑 Java/POM/YAML/properties 后 | 提醒凭据、连接串、日志敏感信息 |
-| [format.sh](format.sh) | 编辑 Java/POM/YAML/properties 后 | 有 Maven 工程时执行 Spotless 检查 |
-| [check-tasks-status.sh](check-tasks-status.sh) | 会话开始 | 列出 in-progress 任务 |
-| [pre-commit-check.sh](pre-commit-check.sh) | `git commit` 前 | 提醒任务状态和后端关键文件变更 |
+| [check-tasks-status.sh](check-tasks-status.sh) | 会话开始 | 只列出 Java 后端 in-progress 任务 |
+| [pre-commit-check.sh](pre-commit-check.sh) | `git commit` 前 | 提醒 Java 任务状态和后端关键文件变更 |
 
 ## 设计原则
 

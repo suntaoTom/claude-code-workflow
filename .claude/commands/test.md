@@ -20,7 +20,7 @@ outputs: ["workspace/src/test/**/*.java", "docs/test-reports/*.md"]
 
 ## 测试位置与工具
 
-测试放 `workspace/src/test/java/<base-package>/`，镜像生产包；资源放 `workspace/src/test/resources/`。默认使用 JUnit 5、Mockito、AssertJ、Spring Boot Test；按需使用 MockMvc、Spring Mock WebSocket、数据库/Redis/RabbitMQ 集成测试和契约测试。禁止创建 Vitest、Playwright、Testing Library 或 `workspace/tests`。
+读取 `docs/backend-project-profile.yml` 确认 `workspace`、POM、测试资源和 profile；先执行 `python3 tools/check-traceability.py`，若有 ERROR 停止；测试放 `workspace/src/test/java/<base-package>/`，镜像生产包；资源放 `workspace/src/test/resources/`。默认使用 JUnit 5、Mockito、AssertJ、Spring Boot Test；按需使用 MockMvc、Spring Mock WebSocket、数据库/Redis/RabbitMQ 集成测试和契约测试。禁止创建 Vitest、Playwright、Testing Library 或 `workspace/tests`。
 
 ## 用例要求
 
@@ -28,7 +28,7 @@ outputs: ["workspace/src/test/**/*.java", "docs/test-reports/*.md"]
 
 ## 执行与报告
 
-按最小范围运行 `mvn -B -ntp test` 或对应测试；失败按“测试代码 → 环境 → 预期 → 源码”分诊，不在此命令修改生产源码。最多自动修测试三轮，仍失败就停下报告。无论结果如何写 `docs/test-reports/<YYYY-MM-DD-HHmm>-<scope>.md`，包含 JUnit 汇总、规则追溯矩阵、集成环境、人工清单和未解决问题。完整 Maven 测试连续两轮全绿且可自动化规则覆盖 100% 后停止新增测试。
+按最小范围运行 `./tools/backend.sh test` 或对应 Maven 命令；失败按“测试代码 → 环境 → 预期 → 源码”分诊，不在此命令修改生产源码。最多自动修测试三轮，仍失败就停下报告。无论结果如何写 `docs/test-reports/<YYYY-MM-DD-HHmm>-<scope>.md`，包含 JUnit 汇总、规则追溯矩阵、集成环境、人工清单和未解决问题。完整 Maven 测试连续两轮全绿且可自动化规则覆盖 100% 后停止新增测试。
 
 需求如下：
 $ARGUMENTS

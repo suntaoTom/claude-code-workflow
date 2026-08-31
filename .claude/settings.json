@@ -8,11 +8,6 @@
             "type": "command",
             "command": ".claude/hooks/check-hardcode.sh",
             "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": ".claude/hooks/format.sh",
-            "timeout": 10000
           }
         ]
       }

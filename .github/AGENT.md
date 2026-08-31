@@ -11,7 +11,7 @@
 
 ## Java 后端验证
 
-- JDK 21、Maven 3.9.9；优先执行 `mvn validate`、`mvn spotless:check`、`mvn test`、`mvn verify`。
+- JDK 21、Maven 3.9.9；优先执行 `./tools/backend.sh validate`、`./tools/backend.sh spotless:check`、`./tools/backend.sh test`、`./tools/backend.sh verify`。
 - WebSocket、RabbitMQ、Redis、数据库和 Nacos 相关变更必须说明集成依赖、幂等、ack/重试/DLQ、事务和多实例影响。
 - 生产日志和故障输入必须脱敏；Token、密码、Cookie、连接串、私钥、PII 和完整 Payload 不得进入代码、prompt、PR 或日志。
 

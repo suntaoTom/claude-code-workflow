@@ -6,6 +6,7 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 
 for file in "$root"/docs/tasks/tasks-*.json; do
   [ -f "$file" ] || continue
+  grep -Eq '"domain"[[:space:]]*:[[:space:]]*"java-backend"' "$file" || continue
   if grep -Eq '"status"[[:space:]]*:[[:space:]]*"(in-progress|blocked)"' "$file"; then
     echo "⚠️ 提交前检查: $(basename "$file") 仍有 in-progress/blocked 任务，请确认状态和阻塞原因"
   fi

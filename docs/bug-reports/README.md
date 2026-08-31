@@ -11,9 +11,26 @@
 
 ## 必填证据
 
-Bug ID、P0/P1/P2、服务/模块、版本/profile/环境、现象、前置和步骤、期望/实际、关联 PRD/task/rules。HTTP/WebSocket/RabbitMQ/事务问题另填 traceId、requestId、messageId、correlationId、消息类型、exchange/queue/routing key、Inbox/Outbox/DLQ 和事务状态（均脱敏）。
+## 后端故障示例
 
-## 流程
+```markdown
+## Bug B001
+
+- 分类：true-bug
+- 服务/模块：websocket
+- 版本 / profile：2.0.0-SNAPSHOT / staging
+- 关联 PRD/task/rules：docs/prds/realtime-message.md#连接与身份 / docs/tasks/tasks-realtime-message.json#T005
+- traceId / requestId：脱敏值
+- messageId / correlationId：脱敏值或无
+- API / WebSocket 消息类型：`/ws` / `ping`
+- 现象：合法身份握手被拒绝
+- 复现：使用测试身份连接 `/ws`，记录返回状态和脱敏日志
+- 期望：握手成功并可接收 pong
+- 实际：返回 403
+- 证据：异常类型、错误码和必要堆栈（已脱敏）
+```
+
+不要把真实 Token、Cookie、连接串、用户身份原文、完整消息 Payload 或数据库凭据放进报告。`/fix` 会先将故障固化为 `workspace/src/test/java` 下的失败 JUnit/集成测试，再修改 `workspace/src/main/java`。
 
 ```text
 报告 → /bug-check 分诊与校验 → 人工 review → /fix 失败测试 + 最小修复 → /test 回归 → PR/MR

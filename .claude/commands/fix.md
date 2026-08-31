@@ -18,7 +18,7 @@ helper: true
 1. 顺调用链读 Java 源码和 JavaDoc；确认违反哪条 `@rules`，规则不明确则停回 `/prd`。
 2. 优先新增一个修复前失败的 JUnit/集成测试；WebSocket 固化握手/消息/关闭，Rabbit 固化 messageId、重试和 DLQ，事务固化提交/回滚。
 3. 做最小源码修复，不顺手重构、不修改无关文件、不改 `@rules`。
-4. 运行目标测试，再运行 `mvn -B -ntp test`、`mvn spotless:check`（若工程存在）；按测试代码→环境→预期→源码分诊失败。
+4. 运行目标测试，再运行 `./tools/backend.sh test`、`./tools/backend.sh spotless:check`（若工程存在）；按测试代码→环境→预期→源码分诊失败。
 5. 汇报文件:行号、根因、规则、测试、配置/消息/数据库兼容性和未验证范围。提交/PR 需用户明确授权，生产部署永不自动执行。
 
 ## 并发

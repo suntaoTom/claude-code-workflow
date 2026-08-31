@@ -7,10 +7,14 @@ docs/
 ├── WORKFLOW.md
 ├── ADAPTING.md
 ├── DECISIONS.md
-├── prds/              # 后端能力/API/消息需求书
-├── tasks/             # /plan 生成的任务清单
+├── backend-project-profile.yml # workspace/Maven 项目适配配置
+├── contracts/            # OpenAPI/WebSocket/RabbitMQ 协议源
+├── examples/             # 文档级 Golden Path，不参与业务构建
+├── prds/                 # 后端能力/API/消息需求书
+├── tasks/             # /plan 生成的 Java 后端任务清单（详见 tasks/README.md）
 ├── bug-reports/       # /bug-check 规范化故障报告
 ├── test-reports/      # JUnit/集成结果和人工 checklist
+├── reports/security/  # /security-gate 安全门禁报告
 └── retrospectives/    # /meta-audit 不可变审计快照
 ```
 
@@ -20,7 +24,8 @@ docs/
 上游产品/协议/架构 → PRD 锚点 → taskId → JavaDoc @prd/@task/@api/@rules → JUnit @Test → 测试报告
 ```
 
-所有引用必须指向真实文件、行号或锚点。上游冲突必须进入 `## 冲突待决`，不能自行改写。
+根 `docs/` 记录 AI 研发过程；`workspace/docs/`（如存在）只记录具体 Java 服务自身的运行/架构文档。`workspace/` 是后端工程唯一容器，详见 [workspace/README.md](../workspace/README.md)。
+
 
 ## 任务清单
 
@@ -32,4 +37,4 @@ docs/
 
 ## 历史
 
-迁移前的前端 PRD、测试报告和元审计报告作为不可变历史保留，不代表当前 Java 后端规范。新增内容不得继续引用其页面、Umi、React 或移动平台流程。
+迁移前的前端 PRD、任务清单、测试报告和元审计报告作为不可变历史保留，不代表当前 Java 后端规范。没有 `domain: java-backend` 的旧任务不参与当前状态扫描；新增内容不得继续引用其页面、Umi、React 或移动平台流程。

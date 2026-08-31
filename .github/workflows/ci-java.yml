@@ -10,8 +10,25 @@ permissions:
   contents: read
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      has_project: ${{ steps.detect.outputs.has_project }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        shell: bash
+        run: |
+          if [ -f workspace/pom.xml ]; then
+            echo "has_project=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_project=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ workspace/pom.xml 不存在，跳过 Java CI"
+          fi
+
   verify:
-    if: ${{ hashFiles('workspace/pom.xml', 'pom.xml') != '' }}
+    needs: detect
+    if: needs.detect.outputs.has_project == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -21,18 +38,15 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+          cache-dependency-path: workspace/pom.xml
       - name: Maven validate
-        working-directory: workspace
-        run: mvn -B -ntp validate
+        run: ./tools/backend.sh validate
       - name: Spotless check
-        working-directory: workspace
-        run: mvn -B -ntp spotless:check
+        run: ./tools/backend.sh spotless:check
       - name: Test
-        working-directory: workspace
-        run: mvn -B -ntp test
+        run: ./tools/backend.sh test
       - name: Verify
-        working-directory: workspace
-        run: mvn -B -ntp verify
+        run: ./tools/backend.sh verify
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,5 +1,8 @@
 # Claude Code GitHub Action 接入指南
 
+> ⚠️ **历史通用教程，非当前 Java 后端流程的 canonical 文档**。本文件保留早期通用接入说明，正文中的 Umi/React/前端 workflow/pnpm 示例不适用于当前 Java 后端工作流；当前配置请以 [.github/SETUP.md](../.github/SETUP.md)、[CLAUDE.md](../CLAUDE.md) 和 [docs/WORKFLOW.md](WORKFLOW.md) 为准。
+
+
 > 把 Claude Code 装进任意 GitHub 仓库, 在 issue / PR 评论 `@claude xxx`, AI 自动改代码 + 开 PR。
 >
 > 本文档基于 spider 仓库实战经验整理, 包含官方文档没说清楚的踩坑点。复制到其他项目仓库直接照做即可。

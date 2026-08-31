@@ -29,11 +29,18 @@ git log --since="$SINCE" --no-merges --name-status --pretty=format:"" -- "$SCOPE
   | grep -E "^[AMDR]" \
   | awk '{print $2}' \
   | awk -F'/' '{
-      if ($0 ~ /^workspace\/src\/features\//) print $4
-      else if ($0 ~ /^workspace\/src\/pages\//) print "pages/" $4
-      else if ($0 ~ /^workspace\/src\/components\//) print "components"
-      else if ($0 ~ /^workspace\/src\//) print "src/" $3
-      else if ($0 ~ /^docs\//) print "docs/" $2
+      if ($0 ~ /^workspace\/src\/main\/java\//) {
+        for (i=1; i<=NF; i++) {
+          if ($i == "controller" || $i == "service" || $i == "domain" || $i == "dao" || $i == "repository" || $i == "infra" || $i == "config") { print $i; next }
+        }
+        print "main-java"
+      }
+      else if ($0 ~ /^workspace\/src\/main\/resources\//) print "configuration"
+      else if ($0 ~ /^workspace\/src\/test\//) print "tests"
+      else if ($0 ~ /^workspace\//) print "backend-project"
+      else if ($0 ~ /^docs\/contracts\//) print "contracts"
+      else if ($0 ~ /^docs\//) print "workflow-docs"
+      else if ($0 ~ /^\.claude\// || $0 ~ /^tools\//) print "workflow"
       else print "root"
     }' \
   | sort | uniq -c | sort -rn

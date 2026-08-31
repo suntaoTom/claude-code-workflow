@@ -22,7 +22,7 @@
 
 ## 验证标准
 
-Java 工程接入后至少通过 `mvn validate`、`mvn spotless:check`、`mvn test`、`mvn verify`；部署后验证 `/actuator/health`、readiness、关键 API、WebSocket `/ws`，并记录 commit、JAR checksum 和镜像 digest。
+Java 工程接入后至少通过 `./tools/backend.sh validate`、`./tools/backend.sh spotless:check`、`./tools/backend.sh test`、`./tools/backend.sh verify`；部署后验证 `/actuator/health`、readiness、关键 API、WebSocket `/ws`，并记录 commit、JAR checksum 和镜像 digest。
 
 ## Claude Fix 安全边界
 

@@ -1,0 +1,22 @@
+{
+  "domain": "java-backend",
+  "moduleName": "模块名",
+  "moduleCode": "module-code",
+  "prdRef": "docs/prds/module-code.md",
+  "createdAt": "YYYY-MM-DD",
+  "tasks": [
+    {
+      "taskId": "T001",
+      "type": "contract",
+      "name": "协议契约",
+      "filePath": "docs/contracts/websocket/module.json",
+      "description": "定义版本化协议边界",
+      "prdRef": "docs/prds/module-code.md#能力点-1-稳定标题",
+      "apiRef": "",
+      "businessRules": [],
+      "acceptanceCriteria": ["契约文件可被审查和引用"],
+      "dependencies": [],
+      "status": "pending"
+    }
+  ]
+}

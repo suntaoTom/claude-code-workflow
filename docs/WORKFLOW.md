@@ -4,6 +4,8 @@
 
 ## 快速开始
 
+母版复制到具体项目后，先把后端工程放入 `workspace/`，填写 `docs/backend-project-profile.yml`，并从仓库根目录启动 Claude Code。母版本身没有 `workspace/pom.xml`，因此不会执行 Maven。
+
 ```text
 /start
 /prd 增加一个需要认证的 WebSocket 消息能力
@@ -20,9 +22,19 @@
 /release v2.0.0
 ```
 
-当前仓库未初始化业务 Java 服务，不能直接宣称 Maven 构建通过；接入目标服务后以项目 POM 和 CI 为准。
+### 门禁脚本
 
-## 八步法
+母版提供确定性检查：
+
+```bash
+python3 tools/validate-prd.py docs/prds/<module>.md
+python3 tools/validate-tasks.py docs/tasks/<tasks>.json
+python3 tools/check-traceability.py
+```
+
+脚本负责结构、领域、路径、依赖图和锚点事实；AI 负责业务语义、上游冲突和方案判断。输出 `NOT_APPLICABLE` 代表母版尚未接入业务工程，不代表构建或代码通过。
+
+
 
 ### 1. `/prd`：需求 → 后端能力需求书
 
@@ -51,11 +63,11 @@
 ### 7. `/build`：构建产物
 
 ```bash
-mvn -B -ntp validate
-mvn -B -ntp spotless:check
-mvn -B -ntp test
-mvn -B -ntp verify
-mvn -B -ntp package
+./tools/backend.sh validate
+./tools/backend.sh spotless:check
+./tools/backend.sh test
+./tools/backend.sh verify
+./tools/backend.sh package
 ```
 
 按需构建分层 Docker 镜像，记录 JAR checksum、commit、镜像 digest、测试报告和 SBOM。

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WebSocket Ping/Pong Contract",
+  "type": "object",
+  "required": ["version", "messages"],
+  "properties": {
+    "version": {"type": "string", "const": "v1"},
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "direction"],
+        "properties": {
+          "type": {"type": "string", "enum": ["ping", "pong"]},
+          "direction": {"type": "string", "enum": ["client-to-server", "server-to-client"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

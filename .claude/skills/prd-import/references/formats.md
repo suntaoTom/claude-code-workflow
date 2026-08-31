@@ -1,5 +1,7 @@
 # 格式细节与踩坑记录
 
+> 当前仓库不提供内置 `workspace/scripts/prd-import.mjs`、`workspace/package.json` 或 `pnpm prd:import` 入口。以下格式说明仅作为转换建议；请用户先导出 Markdown，或使用独立/已配置的转换器，再将产物交给 `/prd @<file>`。
+
 ## .docx (Word 2007+)
 
 ### 用的库: [mammoth](https://github.com/mwilliamson/mammoth.js)
@@ -128,7 +130,7 @@
 
 **关键提示**:
 - 有 `.md` 导出的平台 (Notion / 语雀) **直接跑 `/prd @<文件.md>` 即可**, 连 prd-import 都不用
-- 其他平台导出 `.docx` 后, 跑 `pnpm prd:import <file.docx>` 再 `/prd @<产物>`
+- 其他平台导出 `.docx` 后，使用已配置的独立转换器处理，再执行 `/prd @<产物>`。
 
 **操作示例** (飞书为例):
 
@@ -136,8 +138,7 @@
 1. 产品在飞书给你发了需求文档链接
 2. 打开链接, 右上角 ··· → 导出 → Word
 3. 下载到本地 (假设叫 登录需求.docx)
-4. 本地命令:
-   pnpm prd:import 登录需求.docx
+4. 使用已配置的独立转换器将 `.docx` 转为 Markdown（本仓库不提供转换命令）
    → docs/prds/_imports/登录需求-2026-04-20.md
 5. /prd @docs/prds/_imports/登录需求-2026-04-20.md
 ```

@@ -1,0 +1,70 @@
+{
+  "domain": "java-backend",
+  "moduleName": "认证 WebSocket Ping/Pong",
+  "moduleCode": "websocket-ping",
+  "prdRef": "docs/examples/websocket-ping/prd.md",
+  "createdAt": "2026-08-31",
+  "tasks": [
+    {
+      "taskId": "T001",
+      "type": "contract",
+      "name": "定义 Ping/Pong 消息契约",
+      "filePath": "docs/contracts/websocket/ping-pong.json",
+      "description": "维护版本化原生 WebSocket 消息契约。",
+      "prdRef": "docs/examples/websocket-ping/prd.md#能力点-1-认证-websocket-ping-pong",
+      "apiRef": "docs/contracts/websocket/ping-pong.json",
+      "businessRules": [],
+      "acceptanceCriteria": ["契约定义 ping 和 pong 消息类型。"],
+      "dependencies": [],
+      "status": "pending"
+    },
+    {
+      "taskId": "T002",
+      "type": "security",
+      "name": "实现握手身份配置边界",
+      "filePath": "workspace/src/main/java/<base-package>/config/WebSocketSecurityConfig.java",
+      "description": "绑定握手路径、身份和连接限制配置，不实现具体凭据载体。",
+      "prdRef": "docs/examples/websocket-ping/prd.md#能力点-1-认证-websocket-ping-pong",
+      "apiRef": "",
+      "businessRules": [
+        "当握手身份有效且用户类型受支持时，应允许建立 WebSocket 连接。",
+        "当握手缺少身份或用户类型不受支持时，应拒绝建立连接。"
+      ],
+      "acceptanceCriteria": ["身份和用户类型校验发生在连接进入业务处理前。"],
+      "dependencies": ["T001"],
+      "status": "pending"
+    },
+    {
+      "taskId": "T003",
+      "type": "websocket",
+      "name": "实现 Ping/Pong Handler",
+      "filePath": "workspace/src/main/java/<base-package>/ws/PingPongHandler.java",
+      "description": "处理协议 ping/pong，拒绝超限消息并保持业务 Payload 不透明。",
+      "prdRef": "docs/examples/websocket-ping/prd.md#能力点-1-认证-websocket-ping-pong",
+      "apiRef": "docs/contracts/websocket/ping-pong.json",
+      "businessRules": [
+        "当已建立连接收到协议 `ping` 时，应返回协议 `pong`，且不进入业务消息路由。",
+        "当连接超过配置的消息大小或频率限制时，应以策略违规关闭连接。"
+      ],
+      "acceptanceCriteria": ["Handler 可被单测验证并正确处理关闭边界。"],
+      "dependencies": ["T002"],
+      "status": "pending"
+    },
+    {
+      "taskId": "T004",
+      "type": "unit-test",
+      "name": "编写 Ping/Pong 单元测试",
+      "filePath": "workspace/src/test/java/<base-package>/ws/PingPongHandlerTest.java",
+      "description": "覆盖协议响应、超限关闭和规则追溯。",
+      "prdRef": "docs/examples/websocket-ping/prd.md#能力点-1-认证-websocket-ping-pong",
+      "apiRef": "docs/contracts/websocket/ping-pong.json",
+      "businessRules": [
+        "当已建立连接收到协议 `ping` 时，应返回协议 `pong`，且不进入业务消息路由。",
+        "当连接超过配置的消息大小或频率限制时，应以策略违规关闭连接。"
+      ],
+      "acceptanceCriteria": ["每条可自动化业务规则都有独立 JUnit 测试。"],
+      "dependencies": ["T003"],
+      "status": "pending"
+    }
+  ]
+}

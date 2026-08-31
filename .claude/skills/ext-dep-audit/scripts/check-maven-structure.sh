@@ -9,7 +9,7 @@ if [ ! -f "$PROJECT/pom.xml" ]; then
 fi
 printf '%s\n' '===== Maven structure ====='
 for path in src/main/java src/main/resources src/test/java src/test/resources; do
-  if [ -d "$PROJECT/$path" ]; then echo "✅ $path"; else echo "⚠️ 缺少 $path"; fi
+  if [ -d "$PROJECT/$path" ]; then echo "✅ workspace/$path"; else echo "⚠️ 缺少 workspace/$path"; fi
 done
 printf '%s\n' '===== Sensitive configuration clues ====='
-grep -RInE '(password|secret|private.?key|access.?key)\s*:' "$PROJECT/src" --include='*.yml' --include='*.yaml' --include='*.properties' 2>/dev/null | grep -vE '(\$\{|CHANGE_ME|example)' | head -20 || true
+grep -RInE '(password|secret|private.?key|access.?key)[[:space:]]*:' "$PROJECT/src" --include='*.yml' --include='*.yaml' --include='*.properties' 2>/dev/null | grep -vE '(\$\{|CHANGE_ME|example)' | cut -d: -f1-2 | head -20 || true

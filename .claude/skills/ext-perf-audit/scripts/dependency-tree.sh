@@ -7,4 +7,4 @@ if [ ! -f "$PROJECT/pom.xml" ]; then
   echo "ℹ️ workspace/pom.xml 不存在，跳过 Maven 依赖分析"
   exit 0
 fi
-(cd "$PROJECT" && mvn -B -ntp dependency:tree -DoutputType=text) 2>&1
+mvn -f "$PROJECT/pom.xml" -B -ntp dependency:tree -DoutputType=text 2>&1

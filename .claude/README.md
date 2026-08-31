@@ -14,9 +14,8 @@
 | [workflow.json](workflow.json) | 主线、Bug 支流和独立工具拓扑 | 人工维护 |
 | [settings.json](settings.json) | 团队共享 hooks 配置 | Claude Code 启动时加载 |
 
-## 主线
+当前领域基线：Java 21 / Maven 3.9.9 / Spring Boot / 原生 Spring WebSocket / RabbitMQ / Redis / MyBatis-Plus / Actuator / JUnit / Spotless。根目录是 AI 工作流层，`workspace/` 是后端项目唯一容器；工作流命令必须从仓库根目录启动并通过 profile/`tools/backend.sh` 进入 workspace。
 
-`prd → prd-check → plan → plan-check → code → test → review → security-gate → build → deploy → release`
 
 ## 当前领域基线
 

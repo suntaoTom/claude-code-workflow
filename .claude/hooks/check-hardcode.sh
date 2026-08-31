@@ -6,14 +6,14 @@ case "$filepath" in
   *.java|*.yml|*.yaml|*.properties|*/pom.xml) ;;
   *) exit 0 ;;
 esac
-matches=$(grep -nE '(password|secret|private.?key|access.?key)\s*[:=]\s*[^${<][^ ]+|jdbc:[^${<]|redis://[^${<]|amqp://[^${<]' "$filepath" 2>/dev/null | grep -vE '(example|placeholder|CHANGE_ME|\$\{|<[^>]+>)' | head -5)
-if [ -n "$matches" ]; then
+match_lines=$(grep -nE '(password|secret|private.?key|access.?key)[[:space:]]*[:=][[:space:]]*[^${<][^ ]+|jdbc:[^${<]|redis://[^${<]|amqp://[^${<]' "$filepath" 2>/dev/null | grep -vE '(example|placeholder|CHANGE_ME|\$\{|<[^>]+>)' | cut -d: -f1 | head -5)
+if [ -n "$match_lines" ]; then
   echo "⚠️ P0 硬编码检测: $filepath 可能包含凭据或连接信息，请改用 profile/Secret/环境变量"
-  echo "$matches"
+  echo "  可疑行号: $match_lines"
 fi
-log_matches=$(grep -nE 'System\.out|printStackTrace|log\.(trace|debug|info|warn|error).*([Pp]ayload|[Pp]assword|[Tt]oken|[Cc]ookie)' "$filepath" 2>/dev/null | head -5)
-if [ -n "$log_matches" ]; then
+log_lines=$(grep -nE 'System\.out|printStackTrace|log\.(trace|debug|info|warn|error).*([Pp]ayload|[Pp]assword|[Tt]oken|[Cc]ookie)' "$filepath" 2>/dev/null | cut -d: -f1 | head -5)
+if [ -n "$log_lines" ]; then
   echo "⚠️ 日志安全检测: $filepath 可能输出敏感信息或完整 Payload"
-  echo "$log_matches"
+  echo "  可疑行号: $log_lines"
 fi
 exit 0

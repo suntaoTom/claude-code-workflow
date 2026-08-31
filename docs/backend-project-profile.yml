@@ -1,0 +1,64 @@
+# Java 后端项目 Profile
+
+> 母版复制到具体项目后，先填写本文件。它描述目标工程适配信息，不保存 Secret、Token、密码或连接串。
+
+project:
+  name: "[待填写]"
+  root: workspace
+  basePackage: "[待填写]"
+
+java:
+  version: 21
+  sourceRoot: workspace/src/main/java
+  testRoot: workspace/src/test/java
+  resourcesRoot: workspace/src/main/resources
+  testResourcesRoot: workspace/src/test/resources
+
+maven:
+  version: "3.9.9"
+  pomPath: workspace/pom.xml
+  wrapperPath: workspace/mvnw
+  validateCommand: "./tools/backend.sh validate"
+  formatCommand: "./tools/backend.sh spotless:check"
+  testCommand: "./tools/backend.sh test"
+  verifyCommand: "./tools/backend.sh verify"
+  packageCommand: "./tools/backend.sh package"
+
+spring:
+  bootVersion: "[待填写]"
+  cloudVersion: "[待填写]"
+  cloudAlibabaVersion: "[待填写]"
+  configSource: "[local|nacos|other]"
+
+communication:
+  websocket:
+    enabled: false
+    implementation: native
+    handshakePath: /ws
+  rabbitmq:
+    enabled: false
+    contractRoot: docs/contracts/rabbitmq
+  redis:
+    enabled: false
+  database:
+    enabled: false
+    type: "[待填写]"
+    migrationTool: "[待填写]"
+
+contracts:
+  openapiRoot: docs/contracts/openapi
+  websocketRoot: docs/contracts/websocket
+  rabbitmqRoot: docs/contracts/rabbitmq
+
+ci:
+  primary: "[gitlab|github|待填写]"
+  enabled: []
+  deploymentSource: "[待填写]"
+
+deployment:
+  enabled: false
+  target: "[kubernetes|vm|container|待填写]"
+  healthPath: /actuator/health
+  readinessPath: /actuator/health/readiness
+
+# 参考项目的 micro-parent、starter 和部署配置不能直接复制；先以目标项目 POM/effective-pom 和平台文档为准。

@@ -26,11 +26,27 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      has_project: ${{ steps.detect.outputs.has_project }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        shell: bash
+        run: |
+          if [ -f workspace/pom.xml ]; then
+            echo "has_project=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_project=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ workspace/pom.xml 不存在，无法执行 Java 部署"
+          fi
+
   build:
-    if: ${{ hashFiles('workspace/pom.xml', 'pom.xml') != '' }}
+    needs: detect
+    if: needs.detect.outputs.has_project == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,11 +55,15 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+          cache-dependency-path: workspace/pom.xml
       - name: Verify and package
-        working-directory: workspace
         run: |
-          mvn -B -ntp validate spotless:check test verify package
-          sha256sum target/*.jar
+          ./tools/backend.sh validate
+          ./tools/backend.sh spotless:check
+          ./tools/backend.sh test
+          ./tools/backend.sh verify
+          ./tools/backend.sh package
+          sha256sum workspace/target/*.jar
       - name: Build image
         run: docker build --tag "${{ vars.IMAGE_NAME }}:${{ inputs.version }}" workspace
       - name: Verify image metadata
@@ -54,12 +74,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
-      - name: Deployment handoff
+      - name: Block unconfigured deployment
+        shell: bash
         run: |
-          echo "Artifact built from $GITHUB_SHA"
-          echo "Target platform: ${{ inputs.platform }}"
-          echo "Configure the repository environment with the approved deploy command."
-      - name: Health verification contract
-        run: |
-          echo "Required checks: /actuator/health, readiness, critical API, WebSocket /ws"
-          echo "No deployment or rollback is performed by this placeholder job."
+          echo "::error::Java deployment adapter is not configured for platform '${{ inputs.platform }}'."
+          echo "Configure a reviewed, fixed-path adapter and artifact/image handoff before enabling deployment."
+          echo "Required post-deploy checks: /actuator/health, readiness, critical API, WebSocket /ws."
+          exit 1

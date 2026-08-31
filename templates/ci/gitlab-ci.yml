@@ -1,0 +1,8 @@
+# GitLab Java CI 模板（可选安装）
+# 目标工程必须位于 workspace/，并在 GitLab CI variables 中配置私有仓库和部署凭据。
+# 使用共享模板前先确认组织仓库、ref、变量契约和唯一部署源。
+include:
+  - project: "[待填写共享 Java GitOps 模板项目]"
+    ref: "[待填写固定版本或 commit]"
+    file:
+      - "[待填写 Java CI 模板路径]"

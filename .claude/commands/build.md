@@ -9,17 +9,18 @@ idx: 7
 
 ## 前置检查
 
-- 确认 `workspace/pom.xml` 和目标 Java 工程存在；当前工作流仓库没有示例服务时，明确跳过 Maven 构建，不虚报通过。
+- 确认 `docs/backend-project-profile.yml` 存在并读取 Maven/POM、profile 和 Docker 路径。
+- 所有 Maven 操作通过 `./tools/backend.sh`，它固定使用 `workspace/pom.xml`；不要依赖当前目录或执行根目录裸 `mvn`。
 - 确认 JDK 21、Maven 3.9.9、profile、私有 Maven 仓库凭据和工作区干净度。
 
 ## 构建顺序
 
 ```bash
-mvn -B -ntp validate
-mvn -B -ntp spotless:check
-mvn -B -ntp test
-mvn -B -ntp verify
-mvn -B -ntp package
+./tools/backend.sh validate
+./tools/backend.sh spotless:check
+./tools/backend.sh test
+./tools/backend.sh verify
+./tools/backend.sh package
 # 按需：docker build --tag <registry>/<image>:<version> workspace/
 ```
 

@@ -1,15 +1,15 @@
 ---
 description: 后端需求完备性检查器 — 校验 API、WebSocket、消息、可靠性和上游引用
 argument-hint: @docs/prds/<module>.md
-allowed-tools: Read, Glob, Grep
+allowed-tools: Read, Glob, Grep, Bash
 helper: true
 ---
 
 你是 Java 后端需求完备性检查器。只读检查输入 PRD 是否可以进入 `/plan`，一次汇总全部问题，不修改 PRD。
 
-## 输入
+## 第零步：确定性结构检查
 
-必须提供 `@docs/prds/<module>.md`；缺少路径时停止并要求补充。
+先执行 `python3 tools/validate-prd.py <PRD 路径>`。脚本失败时直接阻塞，不进入后续语义检查；脚本通过后再由 AI 检查上游引用真实性、评审证据和业务语义。
 
 ## 六项硬检查
 

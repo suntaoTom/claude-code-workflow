@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 """
-OpenAPI -> 按 tag 拆分的 Markdown 索引生成器
+OpenAPI -> 按 tag 拆分的 Java 后端 Markdown 契约索引生成器
 
-输入 (按优先级自动探测):
-    1. docs/apis/openapi/*.json    (推荐, 与 docs/apis/ 索引层同栈)
-    2. workspace/api-spec/*.json   (向后兼容, UmiJS/前端项目 pnpm gen:api 流的旧路径)
+输入:
+    docs/contracts/openapi/*.json
 
-输出: docs/apis/<tag-slug>.md   (每个 tag 一个 md, PRD 通过锚点引用)
-      docs/apis/README.md       (入口索引)
+输出:
+    docs/apis/<tag-slug>.md
+    docs/apis/README.md
 
 设计原则:
-- 主源是 OpenAPI JSON, .md 是自动生成的索引层, 严禁手改 .md
-- 每个 operation 一个二级标题 = 锚点 (operationId, 没有时按 method-path 推导)
-- 字段表只展示业务关键字段 (name / 类型 / 必填 / 描述), 嵌套 schema 走 $ref 链
-- PRD 引用方式: @api docs/apis/<tag>.md#<operation-id>
-
-跨技术栈兼容:
-- 代码 @api 引用扫描会自动探测 workspace/lib/*.dart (Flutter) /
-  workspace/src/*.ts(x|.vue) (React/Vue/Umi) 等结构
+- OpenAPI JSON 是契约源，Markdown 是生成的索引层，禁止手改生成文件。
+- 每个 operation 一个二级标题，operationId 作为稳定锚点。
+- Java 源码中的 @api 引用从 workspace/src/main/java/ 扫描并校验。
 
 使用:
     python3 tools/gen_api_md.py
@@ -36,14 +31,12 @@ OUT_DIR = ROOT / "docs" / "apis"
 
 # OpenAPI 主源路径候选 (按优先级)
 OPENAPI_DIR_CANDIDATES = [
-    ROOT / "docs" / "apis" / "openapi",
-    ROOT / "workspace" / "api-spec",
+    ROOT / "docs" / "contracts" / "openapi",
 ]
 
 # 代码扫描候选: (路径, 文件 glob 列表) — 用于 @api 锚点断链检查
 WORKSPACE_SCAN_CANDIDATES: list[tuple[Path, tuple[str, ...]]] = [
-    (ROOT / "workspace" / "lib", ("*.dart",)),
-    (ROOT / "workspace" / "src", ("*.ts", "*.tsx", "*.js", "*.jsx", "*.vue")),
+    (ROOT / "workspace" / "src" / "main" / "java", ("*.java",)),
 ]
 
 # 标记自动生成, 防止有人手改
@@ -317,9 +310,9 @@ def group_by_tag(spec: dict[str, Any]) -> dict[str, list[tuple[str, str, dict[st
 ANCHOR_OP_RE = re.compile(r"^## ([a-z0-9一-龥-]+)\s*$", re.MULTILINE)
 ANCHOR_SCHEMA_RE = re.compile(r"^### (schema-[a-z0-9-]+)\s*$", re.MULTILINE)
 
-# 匹配 Dart 源码里的 @api 引用 (支持单行多个, 逗号分隔)
-# /// @api docs/apis/security.md#current, docs/apis/wallet.md#schema-walletform
-DART_API_REF_RE = re.compile(r"@api\s+([^\n\r]+)")
+# 匹配 JavaDoc/Javadoc 中的 @api 引用 (支持一行多个, 逗号分隔)
+# @api docs/apis/security.md#current, docs/apis/wallet.md#schema-walletform
+JAVA_API_REF_RE = re.compile(r"@api\s+([^\n\r]+)")
 API_REF_TARGET_RE = re.compile(r"docs/apis/([a-z0-9-]+)\.md#([a-z0-9-]+)")
 
 
@@ -329,7 +322,7 @@ def extract_anchors(md_text: str) -> set[str]:
 
 
 def scan_code_api_refs() -> list[tuple[Path, str, str]]:
-    """扫描所有 workspace/* 候选路径下的源码文件, 提取 @api 引用 (跨技术栈通用)"""
+    """扫描 workspace/src/main/java 下的 Java 源码，提取 @api 引用。"""
     refs: list[tuple[Path, str, str]] = []
     for ws_path, globs in WORKSPACE_SCAN_CANDIDATES:
         if not ws_path.exists():
@@ -340,7 +333,7 @@ def scan_code_api_refs() -> list[tuple[Path, str, str]]:
                     text = src_file.read_text(encoding="utf-8")
                 except (UnicodeDecodeError, OSError):
                     continue
-                for line_match in DART_API_REF_RE.finditer(text):
+                for line_match in JAVA_API_REF_RE.finditer(text):
                     for target in API_REF_TARGET_RE.finditer(line_match.group(1)):
                         refs.append((src_file, f"{target.group(1)}.md", target.group(2)))
     return refs
@@ -358,16 +351,14 @@ def render_index(per_source: dict[str, dict[str, int]]) -> str:
         "```",
         "docs/apis/",
         "├── README.md              # 本文件",
-        "├── openapi/               # 主源 OpenAPI JSON (后端导出, 不手改)",
-        "│   └── *.json",
         "└── <tag-slug>.md          # 按 tag 拆分的人类可读 + AI 可读索引",
         "```",
         "",
         "## 维护规则",
         "",
-        "1. **主源**: `openapi/*.json` (或 `workspace/api-spec/*.json`) 是事实来源, 由后端协议层导出, **不手改**",
-        "2. **生成**: 替换 JSON 后执行 `python3 tools/gen_api_md.py` 重新生成所有 `.md`",
-        "3. **业务上下文**: 每个 operation 的 「旧实现」/「迁移备注」段落由人工补充 (注: 当前脚本每次重生成会覆盖, 后续如需保留人工标注, 改造为合并模式)",
+        "1. **主源**: `docs/contracts/openapi/*.json` 是事实来源，由后端协议层导出，**不手改**",
+        "2. **生成**: 替换 JSON 后执行 `python3 tools/gen_api_md.py` 重新生成 `docs/apis/` 索引",
+        "3. **业务上下文**: 每个 operation 的「迁移备注」等人工内容不得写入自动生成文件",
         "4. **PRD 引用**: `@api docs/apis/<tag-slug>.md#<operation-id>`",
         "",
         "## 当前协议源",
@@ -467,11 +458,11 @@ def main() -> int:
     else:
         print("\n📊 首次生成, 无历史锚点可对比")
 
-    # ── Step 5: 扫描 workspace/ 源码 @api 引用, 检查断链 ────────────────
-    dart_refs = scan_code_api_refs()
-    print(f"\n🔗 扫描代码 @api 引用: 共 {len(dart_refs)} 处")
+    # ── Step 5: 扫描 workspace/src/main/java 源码 @api 引用, 检查断链 ────────
+    java_refs = scan_code_api_refs()
+    print(f"\n🔗 扫描 Java 源码 @api 引用: 共 {len(java_refs)} 处")
     broken: list[tuple[Path, str, str]] = []
-    for src, tag_md, anchor in dart_refs:
+    for src, tag_md, anchor in java_refs:
         new_anchors = new_anchors_by_file.get(tag_md)
         if new_anchors is None or anchor not in new_anchors:
             broken.append((src, tag_md, anchor))

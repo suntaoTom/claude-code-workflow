@@ -13,7 +13,7 @@ tools: [Read, Grep, Glob, Write]
 1. Java 规则违规：前端残留命令、Maven/Java 路径、硬编码凭据、错误日志 Payload、缺 JavaDoc 锚点。
 2. 文档漂移：CLAUDE、rules、commands、templates、README、workflow.json 是否描述同一套 Java 后端流程。
 3. 内部一致性：命令/agent/hook/rule 列表与真实文件，frontmatter 的 inputs/outputs/gate 与正文。
-4. 追溯链：PRD → task → `src/main/java` → `src/test/java` → 报告；协议、消息、配置引用真实。
+4. 追溯链：PRD → task → `workspace/src/main/java` → `workspace/src/test/java` → 报告；协议、消息、配置引用真实。
 5. 死链接和孤儿资产：相对链接、删除的前端入口、未登记的新规则。
 6. CI/CD：GitLab/GitHub 双入口是否职责清晰、是否存在重复部署和凭据泄露风险。
 

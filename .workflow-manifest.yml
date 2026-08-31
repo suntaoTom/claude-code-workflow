@@ -1,0 +1,45 @@
+schemaVersion: 1
+template:
+  name: ai-java-backend-workflow
+  version: "0.1.0"
+domain: java-backend
+projectRoot: workspace
+paths:
+  pom: workspace/pom.xml
+  mainJava: workspace/src/main/java
+  mainResources: workspace/src/main/resources
+  testJava: workspace/src/test/java
+  testResources: workspace/src/test/resources
+  contracts: docs/contracts
+tools:
+  backend: tools/backend.sh
+  validators:
+    - tools/validate-prd.py
+    - tools/validate-tasks.py
+    - tools/check-traceability.py
+  apiIndex: tools/gen_api_md.py
+activeInputs:
+  prds: docs/prds/*.md
+  tasks: docs/tasks/tasks-*.json
+  contracts:
+    - docs/contracts/openapi/*.json
+    - docs/contracts/websocket/*
+    - docs/contracts/rabbitmq/*
+exclusions:
+  prds:
+    - docs/prds/_template.md
+    - docs/prds/REVIEW.md
+    - docs/prds/_intake-spec.md
+  history:
+    - docs/archive/**
+    - docs/retrospectives/**
+    - docs/prds/_imports/**
+taskRequirements:
+  domain: java-backend
+  status: [pending, in-progress, done, blocked]
+  filePathPrefixes: [workspace/, docs/, tools/, .github/]
+installation:
+  overwriteExisting: false
+  installCiByDefault: false
+  installDeployByDefault: false
+  installDeploy: explicit

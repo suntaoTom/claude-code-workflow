@@ -29,6 +29,7 @@ outputs: ["docs/tasks/*.json"]
 
 ```json
 {
+  "domain": "java-backend",
   "moduleName": "模块名",
   "moduleCode": "kebab-case",
   "prdRef": "docs/prds/x.md",
@@ -49,7 +50,7 @@ outputs: ["docs/tasks/*.json"]
 }
 ```
 
-每个任务必须有真实 `prdRef`、`businessRules`、`acceptanceCriteria`；配置/契约/文档任务没有业务规则时显式使用空数组并说明原因。保存前输出预览，文件写入 `docs/tasks/tasks-<module>-<date>.json`。
+每个新生成的任务清单顶层必须包含 `"domain": "java-backend"`；每个任务必须有真实 `prdRef`、`businessRules`、`acceptanceCriteria`。保存前输出预览，文件写入 `docs/tasks/tasks-<module>-<date>.json`。
 
 需求如下：
 $ARGUMENTS

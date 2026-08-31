@@ -9,7 +9,8 @@ idx: 8
 
 ## 前置门禁
 
-1. 检查 Git 状态、分支、版本和已验证 commit；生产必须人工审批。
+1. 先读取 `docs/backend-project-profile.yml`，确认目标工程路径、CI 主入口、部署源和目标平台；profile 未填写或与实际工程冲突时停止。
+2. 检查 Git 状态、分支、版本和已验证 commit；生产必须人工审批。
 2. 检查 JAR/镜像由当前 commit 构建，记录 checksum/image digest；不存在或过期则提示先 `/build`。
 3. 检查 profile、Nacos、RabbitMQ、Redis、MariaDB、镜像仓库和目标环境变量；不输出 Secret 值。
 4. 生产部署前确认数据库 migration 和 API/WebSocket/RabbitMQ 契约向后兼容。

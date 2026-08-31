@@ -2,7 +2,7 @@
 # 具体分诊和修复规则在 .claude/commands/bug-check.md、fix.md。
 name: Claude Fix
 
-on:
+"on":
   issue_comment:
     types: [created]
   workflow_dispatch:
@@ -65,30 +65,6 @@ jobs:
             触发来源：${{ github.event_name }}；触发人：@${{ github.actor }}
             只使用脱敏故障信息，不读取或输出 Secret、Token、Cookie、连接串和完整业务 Payload。
             ${{ github.event_name == 'issue_comment' && format('Issue: {0}\n正文:\n{1}\n评论:\n{2}', github.event.issue.title, github.event.issue.body, github.event.comment.body) || inputs.bug_description }}
-          allowed_tools: |
-            Read
-            Edit
-            Write
-            Glob
-            Grep
-            Bash(mvn *)
-            Bash(java -version)
-            Bash(git status)
-            Bash(git diff:*)
-            Bash(git log:*)
-            Bash(git checkout -b fix/*)
-            Bash(git checkout fix/*)
-            Bash(git add workspace/*)
-            Bash(git add docs/*)
-            Bash(git commit:*)
-            Bash(git push -u origin fix/*)
-            Bash(gh pr create:*)
-          disallowed_tools: |
-            Bash(git push -f *)
-            Bash(git push --force *)
-            Bash(git reset --hard *)
-            Bash(git checkout main*)
-            Bash(git checkout master*)
-            Bash(rm -rf *)
-            Bash(git add .github/*)
-            Bash(git add .claude/*)
+          claude_args: >-
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(./tools/backend.sh *),Bash(java -version),Bash(git status),Bash(git diff:*),Bash(git log:*),Bash(git checkout -b fix/*),Bash(git checkout fix/*),Bash(git add workspace/*),Bash(git add docs/*),Bash(git commit:*),Bash(git push -u origin fix/*),Bash(gh pr create:*)"
+            --disallowedTools "Bash(git push -f *),Bash(git push --force *),Bash(git reset --hard *),Bash(git checkout main*),Bash(git checkout master*),Bash(rm -rf *),Bash(git add .github/*),Bash(git add .claude/*)"

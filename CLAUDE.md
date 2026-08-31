@@ -48,9 +48,10 @@
 
 - 业务断言唯一来源是源文件 JavaDoc 的 `@rules`，每条规则对应独立测试用例
 - 单元测试优先；需要 Spring 容器、数据库、Redis、RabbitMQ 或 WebSocket 时使用对应集成测试
-- 测试目录按生产包镜像：`src/test/java/<base-package>/`
+- 测试目录按生产包镜像：`workspace/src/test/java/<base-package>/`
 - 不伪造真实生产基础设施、负载、多节点故障、跨网络行为或生产发布结果；不可自动化事项写入人工 checklist
 - 测试失败按“测试代码 → 环境 → 预期 → 源码”分诊，源码是最后才怀疑的对象
+- 所有 Maven 操作优先通过 `./tools/backend.sh`，脚本固定指向 `workspace/pom.xml`；不要在根目录执行裸 `mvn`
 
 详见 `.claude/rules/testing.md`。
 
@@ -87,6 +88,8 @@ workspace/
 
 ## 文档与追溯
 
+- `.workflow-manifest.yml`：母版领域、workspace 路径、活跃输入和安装策略
+- `docs/backend-project-profile.yml`：目标后端项目的版本、能力、契约、CI 和部署适配
 - `docs/prds/`：后端能力/API/消息需求书
 - `docs/tasks/`：`/plan` 生成的任务清单
 - `docs/bug-reports/`：规范化缺陷报告

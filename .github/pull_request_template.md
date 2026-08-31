@@ -27,10 +27,10 @@
 
 ## 验证清单
 
-- [ ] `mvn -B -ntp validate`
-- [ ] `mvn -B -ntp spotless:check`
-- [ ] `mvn -B -ntp test`
-- [ ] `mvn -B -ntp verify`（如适用）
+- [ ] `./tools/backend.sh validate`
+- [ ] `./tools/backend.sh spotless:check`
+- [ ] `./tools/backend.sh test`
+- [ ] `./tools/backend.sh verify`（如适用）
 - [ ] 规则对应的 JUnit/集成/契约测试已补齐
 - [ ] 测试报告和人工 checklist 已更新
 - [ ] JavaDoc `@prd/@task/@api/@rules` 与目录 README 已同步
